@@ -1,9 +1,16 @@
+import io
+
+from elizascript.token import Token
+
+
 class Tokenizer:
+
 
     #this is just good enough to divide the ELIZA script file format
     #into tokens useful to eliza_script_reader
-    def __init__(self, script_file):
-        self.stream = script_file
+    def __init__(self, script_stream: io.StringIO):
+        #script_file, stream_type:str='textfile'):
+        self.stream: io.StringIO = script_stream
         self.token = None
         self.got_token = False
         self.buf_len = 512
@@ -18,14 +25,17 @@ class Tokenizer:
         self.got_token = True
         return self._readtok()
 
+
     def nexttok(self):
         if self.got_token:
             self.got_token = False
             return self.token
         return self._readtok()
 
+
     def line(self):
         return self.line_number
+
 
     def _readtok(self):
         while True:
@@ -47,11 +57,11 @@ class Tokenizer:
             if ch == ord('='):
                 return Token(Token.Typ.SYMBOL, "=")
 
-            if ch.isdigit():
+            if self._is_digit(ch):
                 value = chr(ch)
                 while True:
                     peek_ch = self._peekch()
-                    if peek_ch and peek_ch.isdigit():
+                    if peek_ch and self._is_digit(peek_ch):
                         value += chr(peek_ch)
                         self._nextch()
                     else:
@@ -102,3 +112,6 @@ class Tokenizer:
 
     def _non_symbol(self, ch):
         return ch in (ord('('), ord(')'), ord(';')) or self._is_whitespace(ch)
+
+    def _is_digit(self, ch):
+        return 48 <= ch <= 57
