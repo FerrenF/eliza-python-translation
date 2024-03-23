@@ -5,11 +5,13 @@ from elizascript.token import Token
 
 class Tokenizer:
 
-
     #this is just good enough to divide the ELIZA script file format
     #into tokens useful to eliza_script_reader
+
+
+    # Changes:
+    # 1. This class needs a StringIO object. How it gets one is up to the external application.
     def __init__(self, script_stream: io.StringIO):
-        #script_file, stream_type:str='textfile'):
         self.stream: io.StringIO = script_stream
         self.token = None
         self.got_token = False

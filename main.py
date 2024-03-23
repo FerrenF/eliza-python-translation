@@ -1,20 +1,9 @@
+import argparse
 import sys
 
 import elizascript.eliza_script_reader
 from eliza import Eliza
 from elizascript.DOCTOR_1966_01_CACM import CACM_1966_01_DOCTOR_script
-
-
-def char2uint(c: str) -> ctypes.c_char_p:
-    # create byte objects from the string
-    b_string1 = c.encode('utf-8')
-    return ctypes.c_char_p(b_string1)
-
-
-def unsigned(i: int)-> ctypes.c_uint:
-    return ctypes.c_uint(i)
-
-
 
 def parse_cmdline():
     parser = argparse.ArgumentParser(description="ELIZA -- A Computer Program for the Study of Natural Language Communication Between Man and Machine")

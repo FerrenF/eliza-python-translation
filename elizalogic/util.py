@@ -1,3 +1,4 @@
+import ctypes
 from typing import List, Dict
 
 from elizalogic.RuleBase import RuleBase
@@ -26,9 +27,19 @@ def to_int(s: str)->int:
     return result
 
 
+def char2uint(c: str) -> ctypes.c_char_p:
+    # create byte objects from the string
+    b_string1 = c.encode('utf-8')
+    return ctypes.c_char_p(b_string1)
+
+
+def unsigned(i: int)-> ctypes.c_uint:
+    return ctypes.c_uint(i)
+
+
 # return words constructed from given reassembly_rule and components
 # e.g. reassemble([ARE, YOU, 1], [MAD, ABOUT YOU]) -> [ARE, YOU, MAD]
-def reassemble(reassembly_rule: List[str], components: List[str])->[]:
+def reassemble(reassembly_rule: List[str], components: List[str]) -> List[str]:
     result: List[str] = []
     for r in reassembly_rule:
         n = to_int(r)
@@ -188,3 +199,4 @@ def get_rule(rules: RuleMap, keyword: str) -> RuleBase:
 
 def delimiter_character(c: str)->bool:
     return (len(str)==1) and c in ",."
+

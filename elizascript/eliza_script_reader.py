@@ -1,8 +1,10 @@
 from io import StringIO
+from typing import List
 
 import elizalogic.constant
 from elizalogic.RuleKeyword import RuleKeyword
 from elizalogic.RuleMemory import RuleMemory
+from elizascript.script import Script
 from elizascript.token import Token
 from elizascript.tokenizer import Tokenizer
 
@@ -11,43 +13,51 @@ class ElizaScriptReader:
     def __init__(self, script_file: StringIO):
 
         self.tokenizer = Tokenizer(script_file)
-        self.script = None
+        self.script: Script = Script()
 
         self.script.hello_message = self.rdlist()
         if self.tokenizer.peektok().symbol("START"):
             self.tokenizer.nexttok()  # skip over START, if present
 
+        # Begin reading rules until we can't.
         while self.read_rule():
             pass
 
         # Check if the script meets the minimum requirements
         if elizalogic.constant.SPECIAL_RULE_NONE not in self.script.rules:
             raise RuntimeError("Script error: no NONE rule specified; see Jan 1966 CACM page 41")
-        if not self.script.mem_rule:
+        if not self.script.mem_rule.is_valid():
             raise RuntimeError("Script error: no MEMORY rule specified; see Jan 1966 CACM page 41")
-        if self.script.mem_rule.keyword() not in self.script.rules:
-            msg = f"Script error: MEMORY rule keyword '{self.script.mem_rule.keyword()}' "
-            msg += "is not also a keyword in its own right; see Jan 1966 CACM page 41"
+        if self.script.mem_rule.keyword not in self.script.rules:
+            msg = f"Script error: MEMORY rule keyword '{self.script.mem_rule.keyword}' "
+            msg += " `'` is not also a keyword in its own right; see Jan 1966 CACM page 41"
             raise RuntimeError(msg)
+
 
     def errormsg(self, msg):
         return f"Script error on line {self.tokenizer.line()}: {msg}"
 
+
+    # // in the following comments, @ = position in symbol stream on function entry
+    # // return words between opening and closing brackets
+    # // if prior is true nexttok() should be the opening bracket, e.g. @(WORD WORD 0 WORD)
+    # // if prior is false nexttok() should be the first symbol following the
+    # // opening bracket, e.g. (@WORD WORD 0 WORD)
     def rdlist(self, prior=True):
-        s = []
-        t = self.tokenizer.nexttok()
-        if prior and not t.open():
+        s: List[str] = []
+        t: Token = self.tokenizer.nexttok()
+        if prior and not t.is_open():
             raise RuntimeError(self.errormsg("expected '('"))
-        while not t.close():
-            if t.symbol():
+        while not t.is_close():
+            if t.is_symbol():
                 s.append(t.value)
-            elif t.number():
+            elif t.is_number():
                 s.append(t.value)
-            elif t.open():
+            elif t.is_open():
                 sublist = []
                 t = self.tokenizer.nexttok()
-                while not t.close():
-                    if not t.symbol():
+                while not t.is_close():
+                    if not t.is_symbol():
                         raise RuntimeError(self.errormsg("expected symbol"))
                     if sublist:
                         sublist.append(' ')
@@ -59,48 +69,58 @@ class ElizaScriptReader:
             t = self.tokenizer.nexttok()
         return s
 
+
+    # /* e.g.
+    #     (@MEMORY MY
+    #         (0 YOUR 0 = LETS DISCUSS FURTHER WHY YOUR 3)
+    #         (0 YOUR 0 = EARLIER YOU SAID YOUR 3)
+    #         (0 YOUR 0 = BUT YOUR 3)
+    #         (0 YOUR 0 = DOES THAT HAVE ANYTHING TO DO WITH THE FACT THAT YOUR 3))
+    # */
     def read_memory_rule(self):
-        t = self.tokenizer.nexttok()
-        if t.symbol("MEMORY"):
+        t: Token = self.tokenizer.nexttok()
+        if t.is_symbol("MEMORY"):
             t = self.tokenizer.nexttok()
-            if not t.symbol():
+            if not t.is_symbol():
                 raise RuntimeError(self.errormsg("expected keyword to follow MEMORY"))
             if self.script.mem_rule:
                 raise RuntimeError(self.errormsg("multiple MEMORY rules specified"))
             self.script.mem_rule = RuleMemory(t.value)
 
             for _ in range(RuleMemory.num_transformations):
-                decomposition = []
-                reassembly_rules = []
+                decomposition: List[str] = []
+                reassembly_rules: List[List[str]] = []
 
                 if not self.tokenizer.nexttok().open():
                     raise RuntimeError(self.errormsg("expected '('"))
                 for t in iter(self.tokenizer.nexttok, Token(Token.Typ.EOF)):
-                    if t.symbol("="):
+                    if t.is_symbol("="):
                         break
                     decomposition.append(t.value)
                 if not decomposition:
                     raise RuntimeError(self.errormsg("expected 'decompose_terms = reassemble_terms'"))
-                if not t.symbol("="):
+                if not t.is_symbol("="):
                     raise RuntimeError(self.errormsg("expected '='"))
 
-                reassembly = []
+                reassembly: List[str] = []
                 for t in iter(self.tokenizer.nexttok, Token(Token.Typ.EOF)):
-                    if t.close():
+                    if t.is_close():
                         break
                     reassembly.append(t.value)
                 if not reassembly:
                     raise RuntimeError(self.errormsg("expected 'decompose_terms = reassemble_terms'"))
-                if not t.close():
+                if not t.is_close():
                     raise RuntimeError(self.errormsg("expected ')'"))
                 reassembly_rules.append(reassembly)
 
                 self.script.mem_rule.add_transformation_rule(decomposition, reassembly_rules)
 
-            if not self.tokenizer.nexttok().close():
+            if not self.tokenizer.nexttok().is_close():
                 raise RuntimeError(self.errormsg("expected ')'"))
             return True
+
         return False
+
 
     def read_reassembly(self):
         if not self.tokenizer.nexttok().open():
