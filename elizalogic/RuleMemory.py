@@ -1,10 +1,10 @@
 from typing import List, Dict
 
 import hollerith
-from elizalogic.constant import SPECIAL_RULE_NONE, TRACE_PREFIX
+from elizalogic import ElizaConstant
 from elizalogic.transform import Transform
 from elizalogic.RuleBase import RuleBase
-from elizalogic.util import reassemble, match, join
+from elizalogic import reassemble, match, join
 
 
 class RuleMemory(RuleBase):
@@ -34,7 +34,7 @@ class RuleMemory(RuleBase):
             return
 
         new_memory = join(reassemble(transformation.reassembly_rules[0], constituents))
-        self.trace += f"{TRACE_PREFIX}new memory: {new_memory}\n"
+        self.trace += f"{ElizaConstant.TRACE_PREFIX}new memory: {new_memory}\n"
         self.memories.append(new_memory)
 
     def is_valid(self) -> bool:
@@ -58,9 +58,9 @@ class RuleMemory(RuleBase):
 
     def trace_memory_stack(self) -> str:
         if not self.memories:
-            return f"{TRACE_PREFIX}memory queue: <empty>\n"
+            return f"{ElizaConstant.TRACE_PREFIX}memory queue: <empty>\n"
         else:
-            return f"{TRACE_PREFIX}memory queue:\n" + "\n".join(f"{TRACE_PREFIX}  {m}" for m in self.memories)
+            return f"{ElizaConstant.TRACE_PREFIX}memory queue:\n" + "\n".join(f"{ElizaConstant.TRACE_PREFIX}  {m}" for m in self.memories)
 
     # the MEMORY rule must have this number of transformations
     num_transformations = 4

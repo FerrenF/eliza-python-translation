@@ -8,7 +8,7 @@ from typing import List, Tuple, Dict
 
 import elizalogic.constant
 from elizalogic.RuleMemory import RuleMemory
-from elizalogic.constant import RuleMap, TagMap
+from elizalogic import RuleMap, TagMap
 from elizalogic.tracer import NullTracer
 from elizalogic.util import split
 from hollerith.encoding import filter_bcd
@@ -185,7 +185,7 @@ class Eliza:
                     self.trace.newkey_failed("NONE")
                     break
 
-        none_rule = self.rules.get(elizalogic.constant.SPECIAL_RULE_NONE)
+        none_rule = self.rules.get(elizalogic.SPECIAL_RULE_NONE)
         discard = ""
         none_rule.apply_transformation(words, self.tags, discard)
         self.trace.using_none(none_rule.to_string())

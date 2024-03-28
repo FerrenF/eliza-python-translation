@@ -1,5 +1,7 @@
+from elizalogic.constant import ElizaConstant
 from elizalogic.transform import Transform
 from typing import List
+
 class RuleBase:
     def __init__(self, keyword: str, word_substitution: str, precedence: int):
         self.keyword = keyword
@@ -17,7 +19,7 @@ class RuleBase:
             return self.word_substitution
         return word
 
-    def apply_transformation(self, words: List[str], tags: Dict[str, List[str]], link_keyword: str) -> str:
+    def apply_transformation(self, words: List[str], tags: ElizaConstant.TagMap, link_keyword: str) -> (str, List[str]):
         """Apply transformation rules to input words."""
         for decomposition, reassembly_rules in self.transformations:
             # Implementation of decomposition and reassembly

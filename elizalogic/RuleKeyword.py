@@ -2,9 +2,9 @@ from typing import List, Dict, Tuple
 
 import elizalogic.constant
 from elizalogic.RuleBase import RuleBase
-from elizalogic.constant import TagMap
+from elizalogic import ElizaConstant
 from elizalogic.transform import Transform
-from elizalogic.util import join, match, reassemble
+from elizalogic import match, join, reassemble
 
 
 class RuleKeyword(RuleBase):
@@ -20,7 +20,7 @@ class RuleKeyword(RuleBase):
     def has_transformation(self) -> bool:
         return bool(self.transformations) or bool(self.link_keyword)
 
-    def apply_transformation(self, words: List[str], tags: TagMap, link_keyword: str) -> Tuple[str, List[str]]:
+    def apply_transformation(self, words: List[str], tags: ElizaConstant.TagMap, link_keyword: str) -> Tuple[str, List[str]]:
         self.trace_begin(words)
         constituents = []
         for rule in self.transformations:
@@ -61,7 +61,7 @@ class RuleKeyword(RuleBase):
         return "inapplicable", []
 
     def to_string(self) -> str:
-        sexp = f"({'NONE' if self.keyword == elizalogic.constant.SPECIAL_RULE_NONE else self.keyword}"
+        sexp = f"({'NONE' if self.keyword == elizalogic.SPECIAL_RULE_NONE else self.keyword}"
 
         if self.word_substitution:
             sexp += f" = {self.word_substitution}"
@@ -93,21 +93,21 @@ class RuleKeyword(RuleBase):
 
     def trace_begin(self, words: List[str]) -> None:
         self.trace = ""
-        self.trace += f"{elizalogic.constant.TRACE_PREFIX}keyword: {self.keyword}\n"
-        self.trace += f"{elizalogic.constant.TRACE_PREFIX}input: {' '.join(words)}\n"
+        self.trace += f"{elizalogic.ElizaConstant.TRACE_PREFIX}keyword: {self.keyword}\n"
+        self.trace += f"{ElizaConstant.TRACE_PREFIX}input: {' '.join(words)}\n"
 
     def trace_nomatch(self) -> None:
-        self.trace += f"{elizalogic.constant.TRACE_PREFIX}ill-formed script? No decomposition rule matches\n"
+        self.trace += f"{ElizaConstant.TRACE_PREFIX}ill-formed script? No decomposition rule matches\n"
 
     def trace_reference(self, ref: str) -> None:
-        self.trace += f"{elizalogic.constant.TRACE_PREFIX}reference to equivalence class: {ref}\n"
+        self.trace += f"{ElizaConstant.TRACE_PREFIX}reference to equivalence class: {ref}\n"
 
     def trace_decomp(self, d: List[str], constituents: List[str]) -> None:
-        self.trace += f"{elizalogic.constant.TRACE_PREFIX}matching decompose pattern: {' '.join(d)}\n"
-        self.trace += f"{elizalogic.constant.TRACE_PREFIX}decomposition parts: "
+        self.trace += f"{ElizaConstant.TRACE_PREFIX}matching decompose pattern: {' '.join(d)}\n"
+        self.trace += f"{ElizaConstant.TRACE_PREFIX}decomposition parts: "
         for id_, c in enumerate(constituents, start=1):
             self.trace += f"{id_}:\"{c}\" "
         self.trace += "\n"
 
     def trace_reassembly(self, r: List[str]) -> None:
-        self.trace += f"{elizalogic.constant.TRACE_PREFIX}selected reassemble rule: {' '.join(r)}\n"
+        self.trace += f"{ElizaConstant.TRACE_PREFIX}selected reassemble rule: {' '.join(r)}\n"

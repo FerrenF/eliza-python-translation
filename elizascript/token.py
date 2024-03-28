@@ -6,9 +6,9 @@ class Token:
         OPEN_BRACKET = 'open_bracket'
         CLOSE_BRACKET = 'close_bracket'
 
-    def __init__(self, t=None, value=None):
-        self.t = t if t else self.Typ.EOF
-        self.value = value if value else ''
+    def __init__(self, t: str = Typ.EOF, value: str = ''):
+        self.t = t
+        self.value = value
 
     def is_symbol(self, v=None):
         if v:

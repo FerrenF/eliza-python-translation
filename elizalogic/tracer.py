@@ -2,8 +2,8 @@
 from abc import abstractmethod, ABC
 from typing import List
 
-from elizalogic.constant import RuleMap
-from elizalogic.util import join
+from elizalogic import ElizaConstant
+from elizalogic import join
 
 
 class Tracer(ABC):
@@ -32,7 +32,7 @@ class Tracer(ABC):
         pass
 
     @abstractmethod
-    def subclause_complete(self, subclause: str, keystack: List[str], rules: RuleMap) -> None:
+    def subclause_complete(self, subclause: str, keystack: List[str], rules: ElizaConstant.RuleMap) -> None:
         pass
 
     @abstractmethod
@@ -83,7 +83,7 @@ class NullTracer(Tracer):
     def using_memory(self, script: str) -> None:
         pass
 
-    def subclause_complete(self, subclause: str, keystack: List[str], rules: RuleMap) -> None:
+    def subclause_complete(self, subclause: str, keystack: List[str], rules: ElizaConstant.RuleMap) -> None:
         pass
 
     def unknown_key(self, keyword: str, use_nomatch_msg: bool) -> None:
@@ -147,7 +147,7 @@ class StringTracer(NullTracer):
         self.trace_ += "LIMIT=4, so the response is the oldest unused memory\n"
         self.script_ += s
 
-    def subclause_complete(self, subclause: str, keystack: List[str], rules: RuleMap) -> None:
+    def subclause_complete(self, subclause: str, keystack: List[str], rules: ElizaConstant.RuleMap) -> None:
         self.trace_ += "word substitutions made: " + ("<none>" if not self.word_substitutions_ else self.word_substitutions_) + '\n'
         if not keystack:
             if subclause:
