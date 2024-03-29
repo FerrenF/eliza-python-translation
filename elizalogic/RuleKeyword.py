@@ -61,7 +61,7 @@ class RuleKeyword(RuleBase):
         return "inapplicable", []
 
     def to_string(self) -> str:
-        sexp = f"({'NONE' if self.keyword == elizalogic.SPECIAL_RULE_NONE else self.keyword}"
+        sexp = f"({'NONE' if self.keyword == ElizaConstant.SPECIAL_RULE_NONE else self.keyword}"
 
         if self.word_substitution:
             sexp += f" = {self.word_substitution}"
@@ -80,9 +80,9 @@ class RuleKeyword(RuleBase):
                 elif reassembly_rule[0] == "(":
                     sexp += "\n        " + ' '.join(reassembly_rule)  # it's a PRE rule
                 elif reassembly_rule[0] == "=":
-                    sexp += f"\n        (= {' '.join(reassembly_rule[1:])})"  # it's a reference =XXX
+                    sexp += f"\n        (={' '.join(reassembly_rule[1:])})"  # it's a reference =XXX
                 else:
-                    sexp += "\n        (" + ' '.join(reassembly_rule) + ")"
+                    sexp += "\n        (" + ''.join(reassembly_rule) + ")"
             sexp += ")"
 
         if self.link_keyword:

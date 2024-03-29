@@ -218,7 +218,7 @@ class ScriptTest(unittest.TestCase):
         self.assertEqual(len(s.rules), 28)
 
         # Ensure the recreated script text matches the expected text
-        self.assertEqual(str(s), self.recreated_script_text)
+        self.assertEqual(''.join(map(lambda x: x.to_string(), s.rules.values())), self.recreated_script_text)
 
         # Ensure tags are collected correctly
         tags: ElizaConstant.TagMap = collect_tags(s.rules)

@@ -145,4 +145,3 @@ class RuleBase:
 
     def to_string(self) -> str:
         pass
-

@@ -15,10 +15,6 @@ class RuleMemory(RuleBase):
         self.trace = ""
         self._activity = False
 
-    # We just want to know if the rule has been used?
-    def __eq__(self, other):
-        self._activity = True
-
     def create_memory(self, keyword: str, words: List[str], tags: Dict[str, List[str]]):
         if keyword != self.keyword:
             return
@@ -38,7 +34,7 @@ class RuleMemory(RuleBase):
         self.memories.append(new_memory)
 
     def is_valid(self) -> bool:
-        return self._activity and self.memory_exists()
+        return len(self.keyword) or self.memory_exists()
 
     def memory_exists(self) -> bool:
         return len(self.memories) > 0

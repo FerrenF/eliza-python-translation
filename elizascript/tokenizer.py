@@ -16,7 +16,7 @@ def _is_digit(ch):
     return chr(ch).isdigit()
 
 
-def _check_if_symbol(ch):
+def _check_if_not_symbol(ch):
     return ch in (ord('('), ord(')'), ord(';')) or _is_whitespace(ch)
 
 
@@ -27,39 +27,45 @@ class Tokenizer:
         self.line_number: int = 1
 
     def peektok(self) -> Token:
+        pos = self.stream.tell()
         ch = self.stream.peek(1)
         if not ch:
             return Token(Token.Typ.EOF)
 
-        pos = self.stream.tell()
-        tok = self._readtok(ch)
-        self.stream.seek(pos, io.SEEK_SET)
+        tok = self._readtok()
+        pos2 = self.stream.tell()
+        ch2 = self.stream.peek(1)
+
+        ret = pos2 - (pos2 - pos)
+        self.stream.seek(ret, io.SEEK_SET)
+        ch2 = self.stream.peek(1)
         return tok
 
     def nexttok(self) -> Token:
-        ch = self.stream.read(1)
+        ch = self.stream.peek(1)
         if not ch:
             return Token(Token.Typ.EOF)
-        return self._readtok(ch)
+        return self._readtok()
 
     def line(self):
         return self.line_number
 
-    def _readtok(self, ch) -> Token:
-
+    def _readtok(self) -> Token:
+        ch = self.stream.read(1)
         while ch.isspace() or ch == '\n':
             if ch == '\n':
                 self.line_number += 1
             ch = self.stream.read(1)
-            #return self.nexttok()
 
+        if ch == '' or ch is None:
+            return Token(Token.Typ.EOF)
         if ch == '(':
             return Token(Token.Typ.OPEN_BRACKET)
-        elif ch == ')':
+        if ch == ')':
             return Token(Token.Typ.CLOSE_BRACKET)
-        elif ch == '=':
+        if ch == '=':
             return Token(Token.Typ.SYMBOL, "=")
-        elif ch.isdigit():
+        if ch.isdigit():
             value = ch
             while True:
                 peek_ch = self.stream.peek(1)
@@ -69,16 +75,10 @@ class Tokenizer:
                 else:
                     break
             return Token(Token.Typ.NUMBER, value)
-
         value = ch
-        peek_ch = self.stream.peek(1)
-        while True:
-            if not _check_if_symbol(ord(peek_ch)) and peek_ch != '=':
-                value += peek_ch
-                self.stream.read(1)
-                peek_ch = self.stream.peek(1)
-            else:
-                break
+
+        while self.stream.peek(1) and not _check_if_not_symbol(ord(self.stream.peek(1))) and self.stream.peek(1) != '=':
+            value += self.stream.read(1)
         return Token(Token.Typ.SYMBOL, value)
 
 # class Tokenizer:

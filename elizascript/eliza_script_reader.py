@@ -84,7 +84,7 @@ class ElizaScriptReader:
                     t = self.tokenizer.nexttok()
 
                 app_s = elizalogic.join(sublist)
-                s.append("(" + " ".join(sublist) + ")")
+                s.append("(" + app_s + ")")
             else:
                 raise RuntimeError(self.errormsg("expected ')'"))
             t = self.tokenizer.nexttok()
@@ -104,7 +104,7 @@ class ElizaScriptReader:
             t = self.tokenizer.nexttok()
             if not t.is_symbol():
                 raise RuntimeError(self.errormsg("expected keyword to follow MEMORY"))
-            if self.script.mem_rule:
+            if self.script.mem_rule.is_valid():
                 raise RuntimeError(self.errormsg("multiple MEMORY rules specified"))
             self.script.mem_rule = RuleMemory(t.value)
 
@@ -181,11 +181,12 @@ class ElizaScriptReader:
             if keyword in self.script.rules:
                 raise RuntimeError(f"keyword rule already specified for keyword '{keyword}'")
 
-            if self.tokenizer.peektok().is_close():
+            t = self.tokenizer.peektok()
+            if t.is_close():
                 raise RuntimeError(f"keyword '{keyword}' has no associated body")
 
             t = self.tokenizer.nexttok()
-            while t.t != Token.Typ.CLOSE_BRACKET:
+            while not t.is_close():
                 if t.is_symbol("="):
                     t = self.tokenizer.nexttok()
                     if not t.is_symbol():
@@ -200,23 +201,32 @@ class ElizaScriptReader:
                     t = self.tokenizer.peektok()
                     if t.is_symbol("="):
                         # // a reference
-                        self.tokenizer.nexttok()
+                        t = self.tokenizer.nexttok()
                         t = self.tokenizer.nexttok()
                         if not t.is_symbol():
                             raise RuntimeError(self.errormsg("expected equivalence class name"))
                         class_name = t.value
 
-                        if not self.tokenizer.nexttok().is_close():
+                        pk = self.tokenizer.nexttok()
+                        if not pk.is_close():
                             raise RuntimeError(self.errormsg("expected ')'"))
-                        if not self.tokenizer.peektok().is_close():
+                        # redundant
+                        pk = self.tokenizer.peektok()
+                        if not pk.is_close():
                             raise RuntimeError(self.errormsg("expected ')'"))
                     else:
                         # // a decompose/reassemble transformation
                         trans: transform = (self.rdlist(), list())
                         if not trans[0]:
                             raise RuntimeError(self.errormsg("decompose pattern cannot be empty"))
+                        trans[1].extend(self.read_reassembly())
                         while self.tokenizer.peektok().is_open():
                             trans[1].extend(self.read_reassembly())
+
+                        pk = self.tokenizer.nexttok()
+                        if not pk.is_close():
+                            raise RuntimeError(self.errormsg("expected ')'"))
+
                         transformation.append(trans)
                 else:
                     raise RuntimeError(self.errormsg("malformed rule"))
@@ -238,14 +248,18 @@ class ElizaScriptReader:
         t: Token = self.tokenizer.nexttok()
         if t.is_eof():
             return False
+        if not t.is_open():
+            raise RuntimeError(self.errormsg("expected '('"))
+
+        t = self.tokenizer.peektok()
         if t.is_close():
             self.tokenizer.nexttok()
             return True  # ignore empty rule list, if present
-        if not t.is_open():
-            raise RuntimeError(self.errormsg("expected '('"))
-        t = self.tokenizer.peektok()
+
         if not t.is_symbol():
             raise RuntimeError(self.errormsg("expected keyword|MEMORY|NONE"))
+
         if t.value == "MEMORY":
             return self.read_memory_rule()
+
         return self.read_keyword_rule()

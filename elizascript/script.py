@@ -1,5 +1,6 @@
-from typing import List
+from typing import List, Dict
 
+from elizalogic.RuleKeyword import RuleKeyword
 from elizalogic.RuleMemory import RuleMemory
 from elizalogic import ElizaConstant
 
@@ -12,6 +13,6 @@ class Script:
         # ELIZA's opening remarks e.g. "HOW DO YOU DO.  PLEASE TELL ME YOUR PROBLEM"
         self.hello_message: List[str] = []
         # maps keywords -> transformation rules
-        self.rules: ElizaConstant.RuleMap = {}
+        self.rules: Dict[str, RuleKeyword] = {}
         # the one and only special case MEMORY rule.
         self.mem_rule: RuleMemory = RuleMemory()
