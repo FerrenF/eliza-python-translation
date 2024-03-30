@@ -77,7 +77,8 @@ def match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matc
         current_word = words.pop(0)
 
         if patword[0] == '(':
-            if current_word not in tags.get(patword, []):
+            if not inlist(current_word, patword, tags):
+            #if current_word not in tags.get(patword, []):
                 return False, []
         elif patword != current_word:
             return False, []

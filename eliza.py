@@ -14,6 +14,8 @@ from elizalogic.util import split
 from hollerith.encoding import filter_bcd
 
 
+# this should be moved into the 'eliza' module
+
 
 class Eliza:
 

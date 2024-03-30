@@ -100,7 +100,8 @@ class TestMatch(unittest.TestCase):
         words = ["YOU", "WANT", "NICE", "FOOD"]
         pattern = ["1", "(*WANT NEED)", "1"]
         matching_components = []
-        self.assertFalse(match({}, pattern, words, matching_components))
+        m,c = match({}, pattern, words, matching_components)
+        self.assertFalse(m)
 
         words = ["YOU", "WANT", "NICE", "FOOD"]
         pattern = ["1", "(*WANT NEED)", "2"]
