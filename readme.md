@@ -21,11 +21,10 @@ It's destiny lies in the shape of GDscript.
    - elizalogic is partially complete and passes all dependent unit tests
    - eliza has been drafted, and is not complete.
    - match() is passing unit tests
+   - eliza conversation unit test created, not passing
 
 ## To-do:
    - other utility functions need unit tests before proceeding to interpretation logic.
-   - eliza.py functionality needs to be moved to the appropriate module.
-   - eliza needs unit tests made.
    - there are optimizations that can be made based on not being c++, without deviating from the goal
    - util.py is merged into the module __init__.py and can be removed
    - the old version of the tokenizer class can be removed (with caution)
