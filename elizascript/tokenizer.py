@@ -28,6 +28,7 @@ class Tokenizer:
 
     def peektok(self) -> Token:
         pos = self.stream.tell()
+        mline = self.line_number
         ch = self.stream.peek(1)
         if not ch:
             return Token(Token.Typ.EOF)
@@ -38,6 +39,7 @@ class Tokenizer:
 
         ret = pos2 - (pos2 - pos)
         self.stream.seek(ret, io.SEEK_SET)
+        self.line_number = mline
         ch2 = self.stream.peek(1)
         return tok
 

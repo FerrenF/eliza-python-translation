@@ -115,15 +115,22 @@ def match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matc
     return False
 
 def collect_tags(rules: ElizaConstant.RuleMap) -> ElizaConstant.TagMap:
-    tags = ElizaConstant.TagMap()
+    tags: ElizaConstant.TagMap = dict()
     for tag, rule in rules.items():
         keyword_tags = rule.dlist_tags()
-        for tag2 in keyword_tags:
-            if tag2 == "/":
+        for index, item in enumerate(keyword_tags):
+            if item == "/":
                 continue
-            if len(tag2) > 1 and tag2[0] == '/':
-                keyword_tags = keyword_tags[1:]
-            tags[tag2].append(rule.keyword)
+            if len(item) > 1 and item[0] == '/':
+                keyword_tags[index] = item[1:]
+
+            ky = rule.keyword
+            tg = keyword_tags[index]
+            v = []
+            if tg in tags.keys() and len(tags[tg]):
+                v = tags[tg]
+            v.append(ky)
+            tags.update({tg: v})
     return tags
 
 def get_rule(rules: ElizaConstant.RuleMap, keyword: str) -> RuleBase:

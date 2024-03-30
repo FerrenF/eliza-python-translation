@@ -82,11 +82,12 @@ class RuleKeyword(RuleBase):
                 elif reassembly_rule[0] == "=":
                     sexp += f"\n        (={' '.join(reassembly_rule[1:])})"  # it's a reference =XXX
                 else:
-                    sexp += "\n        (" + ''.join(reassembly_rule) + ")"
+                    sexp += "\n        (" + ' '.join(reassembly_rule) + ")"
+
             sexp += ")"
 
         if self.link_keyword:
-            sexp += f"\n    (= {self.link_keyword})"
+            sexp += f"\n    (={self.link_keyword})"
 
         sexp += ")\n"
         return sexp

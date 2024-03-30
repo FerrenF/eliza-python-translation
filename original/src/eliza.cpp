@@ -3005,7 +3005,7 @@ private:
                 else {
                     // a decompose/reassemble transformation
                     transform trans;
-                    trans.decomposition = rdlist();
+                    trans.decomposition = rdlist(false);
                     if (trans.decomposition.empty())
                         throw std::runtime_error(errormsg("decompose pattern cannot be empty"));
                     do {

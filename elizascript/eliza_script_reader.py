@@ -4,18 +4,15 @@ from typing import List, Any, Tuple
 import elizalogic.constant
 from elizalogic.RuleKeyword import RuleKeyword
 from elizalogic.RuleMemory import RuleMemory
+from elizalogic.transform import Transform
 from elizascript import StringIOWithPeek
 from elizascript.script import Script
 from elizascript.token import Token
 from elizascript.tokenizer import Tokenizer
 
-
-class ElizaScriptReader:
-    @staticmethod
-    def read_script(stream: Any) -> Tuple[str, Script]:
-
+def read_script(stream: Any) -> Tuple[str, Script]:
         if isinstance(stream, str):
-            return ElizaScriptReader.read_script(StringIOWithPeek(stream))
+            return read_script(StringIOWithPeek(stream))
 
         elif isinstance(stream, StringIOWithPeek):
             try:
@@ -26,6 +23,8 @@ class ElizaScriptReader:
 
         else:
             raise TypeError("Invalid script type. NEED: str or IOStream")
+
+class ElizaScriptReader:
 
     def __init__(self, script_file: StringIOWithPeek):
 
@@ -73,18 +72,17 @@ class ElizaScriptReader:
             elif t.is_number():
                 s.append(t.value)
             elif t.is_open():
-                sublist = []
+                sublist = str()
                 t = self.tokenizer.nexttok()
                 while not t.is_close():
                     if not t.is_symbol():
                         raise RuntimeError(self.errormsg("expected symbol"))
                     if len(sublist) > 0:
-                        sublist.append(' ')
-                    sublist.append(t.value)
+                        sublist += ' '
+                    sublist += t.value
                     t = self.tokenizer.nexttok()
 
-                app_s = elizalogic.join(sublist)
-                s.append("(" + app_s + ")")
+                s.append("(" + sublist + ")")
             else:
                 raise RuntimeError(self.errormsg("expected ')'"))
             t = self.tokenizer.nexttok()
@@ -143,12 +141,12 @@ class ElizaScriptReader:
         return False
 
 
-    def read_reassembly(self)->List[str]:
+    def read_reassembly(self) -> List[List[str]]:
 
         if not self.tokenizer.nexttok().is_open():
             raise RuntimeError(self.errormsg("expected '('"))
         if not self.tokenizer.peektok().is_symbol("PRE"):
-            return self.rdlist(False)
+            return [self.rdlist(False)]
 
         # It's a PRE reassembly, e.g. (PRE (I ARE 3) (=YOU))
         self.tokenizer.nexttok()  # skip "PRE"
@@ -160,7 +158,7 @@ class ElizaScriptReader:
         pre.extend(["(", *reconstruct, ")", "(", *reference, ")", ")", ])
         if not self.tokenizer.nexttok().is_close():
             raise RuntimeError(self.errormsg("expected ')'"))
-        return pre
+        return [pre]
 
     def read_keyword_rule(self):
         keyword = ""
@@ -168,8 +166,8 @@ class ElizaScriptReader:
         precedence = 0
         tags: List[str] = []
 
-        transform = (List[str], List[str])
-        transformation: List[transform] = []
+        transformation = (List[str], List[List[str]])
+        transform: List[transformation] = []
         class_name = ""
 
         t: Token = self.tokenizer.nexttok()
@@ -216,18 +214,21 @@ class ElizaScriptReader:
                             raise RuntimeError(self.errormsg("expected ')'"))
                     else:
                         # // a decompose/reassemble transformation
-                        trans: transform = (self.rdlist(), list())
-                        if not trans[0]:
+
+                        decomp_list = self.rdlist()
+
+                        if not decomp_list:
                             raise RuntimeError(self.errormsg("decompose pattern cannot be empty"))
-                        trans[1].extend(self.read_reassembly())
+
+                        assembly_list: List[List[str]] = self.read_reassembly()
                         while self.tokenizer.peektok().is_open():
-                            trans[1].extend(self.read_reassembly())
+                            assembly_list.append(self.read_reassembly()[0])
 
                         pk = self.tokenizer.nexttok()
                         if not pk.is_close():
                             raise RuntimeError(self.errormsg("expected ')'"))
 
-                        transformation.append(trans)
+                        transform.append((decomp_list, assembly_list))
                 else:
                     raise RuntimeError(self.errormsg("malformed rule"))
 
@@ -236,7 +237,7 @@ class ElizaScriptReader:
             r = RuleKeyword(
                 keyword, keyword_substitution, precedence, tags, class_name)
 
-            for tr in transformation:
+            for tr in transform:
                 r.add_transformation_rule(tr[0], tr[1])
 
             self.script.rules[keyword] = r

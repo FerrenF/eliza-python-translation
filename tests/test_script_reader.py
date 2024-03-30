@@ -1,10 +1,14 @@
 import unittest
 from io import StringIO
+
+import elizascript
 from elizalogic import ElizaConstant
 from elizalogic import collect_tags
 from elizascript import StringIOWithPeek
-from elizascript.eliza_script_reader import ElizaScriptReader
+from elizascript.eliza_script_reader import ElizaScriptReader, read_script
 from unittest.mock import patch
+
+from elizascript.script import script_to_string
 
 
 class ScriptTest(unittest.TestCase):
@@ -209,7 +213,7 @@ class ScriptTest(unittest.TestCase):
         stream: StringIOWithPeek = StringIOWithPeek(self.script_text)
 
         try:
-            (status, s) = ElizaScriptReader.read_script(stream)
+            (status, s) = read_script(stream)
         except RuntimeError as e:
             print(f"Error loading script: {e.__str__()}")
             exit(2)
@@ -218,7 +222,7 @@ class ScriptTest(unittest.TestCase):
         self.assertEqual(len(s.rules), 28)
 
         # Ensure the recreated script text matches the expected text
-        self.assertEqual(''.join(map(lambda x: x.to_string(), s.rules.values())), self.recreated_script_text)
+        self.assertEqual(script_to_string(s), self.recreated_script_text)
 
         # Ensure tags are collected correctly
         tags: ElizaConstant.TagMap = collect_tags(s.rules)
@@ -230,32 +234,24 @@ class ScriptTest(unittest.TestCase):
                          ["K01", "K12", "K14", "K16", "K17", "K22", "K24", "K27", "K32", "K34", "K36", "K37", "K38"])
         self.assertEqual(tags["TAG3"], ["K32"])
 
-        # Mock read function to simulate script reading and testing script errors
-        with patch('elizascript.read') as mock_read:
-            # Define expected return values for each call to read_script
-            mock_read.side_effect = [
-                Exception("Script error on line 1: expected '('"),
-                Exception("Script error on line 1: expected ')"),
-                Exception("Script error: no NONE rule specified; see Jan 1966 CACM page 41"),
-                Exception("Script error on line 2: expected keyword|MEMORY|NONE"),
-                Exception("Script error on line 2: malformed rule"),
-                Exception("Script error on line 3: expected '('"),
-                Exception("Script error on line 3: expected ')'")
+
+        tests = [
+                ("","Script error on line 1: expected '('"),
+                ("(","Script error on line 1: expected ')'"),
+                ("()","Script error: no NONE rule specified; see Jan 1966 CACM page 41"),
+                ("()\n(","Script error on line 2: expected keyword|MEMORY|NONE"),
+                ("()\n(NONE", "Script error on line 2: malformed rule"),
+                ("()\n(NONE\n(", "Script error on line 3: expected '('"),
+                ("()\n(NONE\n((", "Script error on line 3: expected ')'")
                 # Add more expected return values for other test cases...
             ]
 
-            # Call read_script function with different inputs and assert the results
-            self.assertEqual(ElizaScriptReader.read_script(""), "Script error on line 1: expected '('")
-            self.assertEqual(ElizaScriptReader.read_script("("), "Script error on line 1: expected ')'")
-            self.assertEqual(ElizaScriptReader.read_script("()"),
-                             "Script error: no NONE rule specified; see Jan 1966 CACM page 41")
-            self.assertEqual(ElizaScriptReader.read_script("()\n("),
-                             "Script error on line 2: expected keyword|MEMORY|NONE")
-            self.assertEqual(ElizaScriptReader.read_script("()\n(NONE"), "Script error on line 2: malformed rule")
-            self.assertEqual(ElizaScriptReader.read_script("()\n(NONE\n("), "Script error on line 3: expected '('")
-            self.assertEqual(ElizaScriptReader.read_script("()\n(NONE\n(("), "Script error on line 3: expected ')'")
-            # Add more assertions for other test cases...
-
+        for (sc, ex) in tests:
+            try:
+                result = read_script(sc)
+                self.fail("Expected exception, but got result: {}".format(result))
+            except Exception as e:
+                self.assertEqual(str(e), ex)
 
 if __name__ == '__main__':
     unittest.main()
