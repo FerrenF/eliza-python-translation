@@ -20,11 +20,10 @@ It's destiny lies in the shape of GDscript.
    - hollerith passes all unit tests
    - elizalogic is partially complete and passes all dependent unit tests
    - eliza has been drafted, and is not complete.
-
+   - match() is passing unit tests
 
 ## To-do:
-   - utility functions need unit tests before proceeding to interpretation logic.
-   - match() is not passing unit tests currently
+   - other utility functions need unit tests before proceeding to interpretation logic.
    - eliza.py functionality needs to be moved to the appropriate module.
    - eliza needs unit tests made.
    - there are optimizations that can be made based on not being c++, without deviating from the goal
