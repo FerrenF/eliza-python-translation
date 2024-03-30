@@ -95,20 +95,24 @@ def match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matc
         mc = []
         # Loop until there are no more words left to try
         while True:
-            # Try to match the remaining words with the pattern
+            # but first, we want to Try to match the remaining words with the pattern so we dont exhaust resources
             m, c = match(tags, pattern[:], words[:], mc)
             mc = c
             if m:
-                matching_components.append(join(component))
+                j = join(component)
+                matching_components.append(j)
                 matching_components.extend(c)
                 return True, matching_components
 
+            if not len(words):
+                return False, []
             # If the above match fails, try matching with one fewer word
-            component.append(words.pop(0))
+            w = words.pop(0)
+            component.append(w)
 
     else:
         if len(words) < n:
-            return False
+            return False, []
 
         component = [words.pop(0) for _ in range(n)]
         mc = []
