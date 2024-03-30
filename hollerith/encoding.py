@@ -27,15 +27,18 @@ hollerith_undefined = 0xFF  # Must be > 63
 
 # Hollerith encoding table
 hollerith_encoding = {
-    c: i for i, c in enumerate(string.ascii_uppercase + string.digits + ' $%*+-./')
+    0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9',
+    10: None, 11: '=', 12: "'", 13: None, 14: None, 15: None,
+    16: '+', 17: 'A', 18: 'B', 19: 'C', 20: 'D', 21: 'E', 22: 'F', 23: 'G', 24: 'H', 25: 'I', 26: None, 27: '.', 28: ')', 29: None, 30: None, 31: None,
+    32: '-', 33: 'J', 34: 'K', 35: 'L', 36: 'M', 37: 'N', 38: 'O', 39: 'P', 40: 'Q', 41: 'R', 42: None, 43: '$', 44: '*', 45: None, 46: None, 47: None,
+    48: ' ', 49: '/', 50: 'S', 51: 'T', 52: 'U', 53: 'V', 54: 'W', 55: 'X', 56: 'Y', 57: 'Z', 58: None, 59: ',', 60: '(', 61: None, 62: None, 63: None
 }
 
-
 # Conversion table from ASCII to BCD
-to_bcd = [hollerith_undefined] * 256
-for c in range(64):
-    if hollerith_encoding[c]:
-        to_bcd[ord(hollerith_encoding[c])] = c
+to_bcd = {}
+for c in range(64):  # ASCII range
+    if hollerith_encoding.get(c) is not None:
+        to_bcd[hollerith_encoding[c]] = c
 
 
 def hollerith_defined(c: str) -> bool:
@@ -98,46 +101,29 @@ def utf8_to_utf32(utf8_string):
 def filter_bcd(utf8_string):
     non_bcd_replacement_char = '-'
     result = []
-    utf32 = utf8_to_utf32(utf8_string)
-    for ch in utf32:
-        c32 = ord(ch)
 
-        # case 0x2018:        // 'LEFT SINGLE QUOTATION MARK' (U+2018)
-        # case 0x2019:        // 'RIGHT SINGLE QUOTATION MARK' (U+2019)
-        # case 0x0022:        // 'QUOTATION MARK' (U+0022)
-        # case 0x0060:        // 'GRAVE ACCENT' (U+0060) [backtick]
-        # case 0x00AB:        // 'LEFT-POINTING DOUBLE ANGLE QUOTATION MARK' (U+00AB)
-        # case 0x00BB:        // 'RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK' (U+00BB)
-        # case 0x201A:        // 'SINGLE LOW-9 QUOTATION MARK' (U+201A)
-        # case 0x201B:        // 'SINGLE HIGH-REVERSED-9 QUOTATION MARK' (U+201B)
-        # case 0x201C:        // 'LEFT DOUBLE QUOTATION MARK' (U+201C)
-        # case 0x201D:        // 'RIGHT DOUBLE QUOTATION MARK' (U+201D)
-        # case 0x201E:        // 'DOUBLE LOW-9 QUOTATION MARK' (U+201E)
-        # case 0x201F:        // 'DOUBLE HIGH-REVERSED-9 QUOTATION MARK' (U+201F)
-        # case 0x2039:        // 'SINGLE LEFT-POINTING ANGLE QUOTATION MARK' (U+2039)
-        # case 0x203A:        // 'SINGLE RIGHT-POINTING ANGLE QUOTATION MARK' (U+203A)
+    for ch in utf8_string:
+        c32 = ord(ch)
 
         if c32 in [0x2018, 0x2019, 0x0022, 0x0060, 0x00AB, 0x00BB, 0x201A, 0x201B,
                    0x201C, 0x201D, 0x201E, 0x201F, 0x2039, 0x203A]:
             result.append('\'')
             continue
-        if c32 > 127:
-            # The code point is not ASCII, which implies it's not Hollerith
-            # either as ASCII is a superset of Hollerith. Since we're
-            # just about to uppercase it with std::toupper, which
-            # has undefined behaviour for characters that can't be
-            # encoded in an unsigned char, we'll just replace it with dash.
 
+        if c32 > 127:
+            # Replace non-ASCII characters with non_bcd_replacement_char
             result.append(non_bcd_replacement_char)
             continue
-        c = chr(c32).upper()
+
+        c = ch.upper()
         if c == '?' or c == '!':
             result.append('.')
-        elif ord(c) < len(hollerith_encoding) and hollerith_encoding[ord(c)] is not None:
+        elif c in to_bcd.keys():
             result.append(c)
         else:
             result.append(non_bcd_replacement_char)
-    return ''.join(result)
+
+    return ''.join(result) if len(result) else ''
 
 
 

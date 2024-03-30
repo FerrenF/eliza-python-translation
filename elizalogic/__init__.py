@@ -61,44 +61,46 @@ def inlist(word: str, wordlist: str, tags: Dict[str, List[str]]) -> bool:
         return False
     return False
 
-def match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matching_components: List[str]) -> bool:
+def match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matching_components: List[str]) -> (bool, List[str]):
     matching_components.clear()
 
     if not pattern:
-        return not words
+        return not words, []
 
     patword = pattern.pop(0)
-    n = int(patword)
+    n = to_int(patword)
 
     if n < 0:
         if not words:
-            return False
+            return False, []
 
         current_word = words.pop(0)
 
         if patword[0] == '(':
             if current_word not in tags.get(patword, []):
-                return False
+                return False, []
         elif patword != current_word:
-            return False
+            return False, []
 
         mc = []
-        if match(tags, pattern, words, mc):
+        m, c = match(tags, pattern, words, mc)
+        if m:
             matching_components.append(current_word)
-            matching_components.extend(mc)
-            return True
+            matching_components.extend(c)
+            return True, matching_components
 
     elif n == 0:
         component = []
         mc = []
         while True:
-            if match(tags, pattern, words, mc):
+            m, c = match(tags, pattern, words, mc)
+            if m:
                 matching_components.append(join(component))
-                matching_components.extend(mc)
-                return True
+                matching_components.extend(c)
+                return True, matching_components
 
             if not words:
-                return False
+                return False, []
 
             component.append(words.pop(0))
 
@@ -108,11 +110,12 @@ def match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matc
 
         component = [words.pop(0) for _ in range(n)]
         mc = []
-        if match(tags, pattern, words, mc):
+        m, c = match(tags, pattern, words, mc)
+        if m:
             matching_components.append(join(component))
-            matching_components.extend(mc)
-            return True
-    return False
+            matching_components.extend(c)
+            return True, matching_components
+    return False, []
 
 def collect_tags(rules: ElizaConstant.RuleMap) -> ElizaConstant.TagMap:
     tags: ElizaConstant.TagMap = dict()
