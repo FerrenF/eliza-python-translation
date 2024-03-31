@@ -7,7 +7,7 @@ from typing import Dict, Optional
 from typing import List, Tuple, Dict
 
 import elizalogic.constant
-from elizalogic import split, get_rule
+from elizalogic import split, get_rule, join
 from elizalogic.RuleMemory import RuleMemory
 from elizalogic.tracer import NullTracer
 from hollerith.encoding import filter_bcd
@@ -99,42 +99,54 @@ class Eliza:
         # for simplicity, convert the given input string to a list of uppercase words
         # e.g. "Hello, world!" -> ("HELLO" "," "WORLD" ".")
 
-        words = self._preprocess_input(input_str)
+        input_str = filter_bcd(input_str)
+
+        words = split_user_input(input_str, self.punctuation)
         self.trace.begin_response(words)
 
         # J W's "a certain counting mechanism" is updated for each response
-        self.limit = self.limit % 4 + 1
+        self.limit = (self.limit % 4) + 1
         self.trace.limit(self.limit, self._get_nomatch_msg())
 
 
         keystack: List[str] = []
         top_rank = 0
 
-        for idx, word in enumerate(words):
+        iterator = enumerate(words)
+        for idx, word in iterator:
             if self._is_delimiter(word):
+
                 if len(keystack) == 0:
                     self.trace.discard_subclause(word)
-                    self._handle_empty_keystack(words, idx)
+                    if self.mem_rule.memory_exists() and (not self.use_limit or self.limit == 4):
+                        self.trace.using_memory(self.mem_rule.to_string())
+                    else:
+                        self.trace.discard_subclause(' '.join(words[:idx]))
                     continue
                 else:
-                    words = words.remove(word)
+                    words = words[:idx]
                     break
 
-            rule = get_rule(self.rules, word)
-            if rule:
+            rule = get_rule(self.rules, word, throw=False)
 
+            if rule and len(rule.keyword):
                 if rule.has_transformation():
                     if rule.precedence > top_rank:
+                        # // *word is a keyword with precedence higher than the highest
+                        # // keyword found previously: it goes top of the keystack [page 39 (d)]
                         keystack.insert(0, word)
                         top_rank = rule.precedence
                     else:
+                        # // *word is a keyword with precedence lower than the highest
+                        # // keyword found previously: it goes bottom of the keystack
                         keystack.append(word)
 
                 substitute = rule.word_substitute(word)
                 self.trace.word_substitution(word, substitute)
                 words[idx] = substitute
 
-        self.trace.subclause_complete(' '.join(words), keystack, self.rules)
+        w = ' '.join(words or [])
+        self.trace.subclause_complete(w, keystack, self.rules)
         self.mem_rule.clear_trace()
         self.trace.memory_stack(self.mem_rule.trace_memory_stack())
 
@@ -151,11 +163,12 @@ class Eliza:
 
             # the keystack contains all keywords that occur in the given 'input';
             # apply transformation associated with the top keyword [page 39 (d)]
-        while keystack:
+        while len(keystack):
             top_keyword = keystack.pop(0)
             self.trace.pre_transform(top_keyword, words)
-            rule = self.rules.get(top_keyword)
-            if not rule:
+
+            rule = self.rules.get(top_keyword, None)
+            if not rule: # if (r == rules_.end())
                 if self.use_nomatch_msgs:
                     self.trace.unknown_key(top_keyword, True)
                     return self._get_nomatch_msg()
@@ -164,31 +177,33 @@ class Eliza:
                 self.trace.unknown_key(top_keyword, False)
                 break
 
+
+
             # try to lay down a memory for future use
             self.mem_rule.create_memory(top_keyword, words, self.tags)
-            self.trace.create_memory(self.mem_rule.trace())
+            self.trace.create_memory(self.mem_rule.trace)
 
-            link_keyword = ""
-            action = rule.apply_transformation(words, self.tags, link_keyword)
-            self.trace.transform(rule.trace(), rule.to_string())
+            action, words, link_keyword = rule.apply_transformation(words, self.tags, [])
+            self.trace.transform(rule.trace, rule.to_string())
 
             if action == "complete":
-                return ' '.join(words)
+                return join(words)
 
             if action == "inapplicable":
+                # no decomposition rule matched the input words; script error
+                self.trace.decomp_failed(self.use_nomatch_msgs)
                 if self.use_nomatch_msgs:
-                    self.trace.decomp_failed(True)
+                    self.trace.decomp_failed(self.use_nomatch_msgs)
                     return self._get_nomatch_msg()
-                else:
-                    self.trace.decomp_failed(False)
-                    break
+                break
 
             assert action == "linkkey" or action == "newkey"
 
             if action == "linkkey":
+                # rule links to another; loop
                 keystack.insert(0, link_keyword)
 
-            elif not keystack:
+            elif not keystack or not len(keystack):
                  # newkey means try next highest keyword, but keystack is empty.
                  # The 1966 CACM ELIZA paper, page 41, implies in this situation
                  # a NONE message is used. The conversations in the Quarton pilot
@@ -207,10 +222,6 @@ class Eliza:
         self.trace.using_none(none_rule.to_string())
         return ' '.join(words)
 
-    def _preprocess_input(self, input_str: str) -> List[str]:
-        input_str = filter_bcd(input_str)
-        return split_user_input(input_str, self.punctuation)
-
     def _is_delimiter(self, word: str) -> bool:
         return word in self.delimiters
 
@@ -221,5 +232,6 @@ class Eliza:
             self.trace.discard_subclause(' '.join(words[:idx]))
 
     def _get_nomatch_msg(self) -> str:
-        return Eliza.nomatch_msgs_[self.limit - 1]
+        ind = self.limit - 1 % len(self.nomatch_msgs_)
+        return Eliza.nomatch_msgs_[ind]
 

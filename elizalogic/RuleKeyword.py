@@ -18,47 +18,54 @@ class RuleKeyword(RuleBase):
         return self.tags
 
     def has_transformation(self) -> bool:
-        return bool(self.transformations) or bool(self.link_keyword)
+        return (len(self.transformations) > 0) or (len(self.link_keyword) > 0)
 
-    def apply_transformation(self, words: List[str], tags: ElizaConstant.TagMap, link_keyword: str) -> Tuple[str, List[str]]:
+    def apply_transformation(self, words: List[str], tags: ElizaConstant.TagMap, link_keyword: str) -> Tuple[str, List[str], str]:
         self.trace_begin(words)
         constituents = []
-        for rule in self.transformations:
-            if match(tags, rule.decomposition, words, constituents):
-                self.trace_decomp(rule.decomposition, constituents)
 
-                reassembly_rule = rule.reassembly_rules[rule.next_reassembly_rule]
-                self.trace_reassembly(reassembly_rule)
+        rule = None
+        for item in self.transformations:
+            if match(tags, item.decomposition, words, constituents):
+                rule = item
+                break
 
-                # update the reassembly rule index so that they all get cycled through
-                # rule->next_reassembly_rule++;
-                # dif (rule->next_reassembly_rule == rule->reassembly_rules.size())
-                # rule->next_reassembly_rule = 0
-                rule.next_reassembly_rule = (rule.next_reassembly_rule + 1) % len(rule.reassembly_rules)
+        if rule is None:
+            if not self.link_keyword:
+                self.trace_nomatch()
+                return "inapplicable", words, link_keyword  # [page 39 (f)] should not happen?
+            self.trace_reference(link_keyword)
+            link_keyword = self.link_keyword
+            return "linkkey", words, link_keyword
+        self.trace_decomp(rule.decomposition, constituents)
 
-                if len(reassembly_rule) == 1 and reassembly_rule[0] == "NEWKEY":
-                    return "newkey", words
+        reassembly_rule = rule.reassembly_rules[rule.next_reassembly_rule]
+        self.trace_reassembly(reassembly_rule)
 
-                if len(reassembly_rule) == 2 and reassembly_rule[0] == '=':
-                    self.link_keyword = reassembly_rule[1]
-                    return "linkkey", words
+        # update the reassembly rule index so that they all get cycled through
+        # rule->next_reassembly_rule++;
+        # dif (rule->next_reassembly_rule == rule->reassembly_rules.size())
+        # rule->next_reassembly_rule = 0
 
-                # is it the special-case reassembly rule (PRE (reassembly) (=reference))
-                # (note: this is the only reassembly_rule that is still in a list)
-                if reassembly_rule and reassembly_rule[0] == "(":
-                    reassembly = reassembly_rule[3:-2]
-                    _words = reassemble(reassembly, constituents)
-                    self.link_keyword = reassembly_rule[-1]
-                    return "linkkey", _words
+        rule.next_reassembly_rule = (rule.next_reassembly_rule + 1) % len(rule.reassembly_rules)
 
-                _words = reassemble(reassembly_rule, constituents)
-                return "complete", _words
+        if len(reassembly_rule) == 1 and reassembly_rule[0] == "NEWKEY":
+            return "newkey", words, link_keyword
 
-        if self.link_keyword:
-            return "linkkey", words
+        if len(reassembly_rule) == 2 and reassembly_rule[0] == '=':
+            link_keyword = reassembly_rule[1]
+            return "linkkey", words, link_keyword
 
-        self.trace_nomatch()
-        return "inapplicable", []
+        # is it the special-case reassembly rule (PRE (reassembly) (=reference))
+        # (note: this is the only reassembly_rule that is still in a list)
+        if (len(reassembly_rule) > 0) and reassembly_rule[0] == "(":
+            reassembly = reassembly_rule[2:-1]
+            _words = reassemble(reassembly, constituents)
+            link_keyword = reassembly_rule[-1]
+            return "linkkey", _words, link_keyword
+
+        _words = reassemble(reassembly_rule, constituents)
+        return "complete", _words, link_keyword
 
     def to_string(self) -> str:
         sexp = f"({'NONE' if self.keyword == ElizaConstant.SPECIAL_RULE_NONE else self.keyword}"
@@ -93,9 +100,10 @@ class RuleKeyword(RuleBase):
         return sexp
 
     def trace_begin(self, words: List[str]) -> None:
+        w = ' '.join(words or [])
         self.trace = ""
         self.trace += f"{elizalogic.ElizaConstant.TRACE_PREFIX}keyword: {self.keyword}\n"
-        self.trace += f"{ElizaConstant.TRACE_PREFIX}input: {' '.join(words)}\n"
+        self.trace += f"{ElizaConstant.TRACE_PREFIX}input: {w}\n"
 
     def trace_nomatch(self) -> None:
         self.trace += f"{ElizaConstant.TRACE_PREFIX}ill-formed script? No decomposition rule matches\n"

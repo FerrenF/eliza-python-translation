@@ -1,4 +1,5 @@
 # Constants
+import ctypes
 import string
 
 hollerith_undefined = 0xFF  # Must be > 63
@@ -26,19 +27,20 @@ hollerith_undefined = 0xFF  # Must be > 63
 #           (Available online from Google Books. Search for PRIME.)
 
 # Hollerith encoding table
-hollerith_encoding = {
-    0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9',
-    10: None, 11: '=', 12: "'", 13: None, 14: None, 15: None,
-    16: '+', 17: 'A', 18: 'B', 19: 'C', 20: 'D', 21: 'E', 22: 'F', 23: 'G', 24: 'H', 25: 'I', 26: None, 27: '.', 28: ')', 29: None, 30: None, 31: None,
-    32: '-', 33: 'J', 34: 'K', 35: 'L', 36: 'M', 37: 'N', 38: 'O', 39: 'P', 40: 'Q', 41: 'R', 42: None, 43: '$', 44: '*', 45: None, 46: None, 47: None,
-    48: ' ', 49: '/', 50: 'S', 51: 'T', 52: 'U', 53: 'V', 54: 'W', 55: 'X', 56: 'Y', 57: 'Z', 58: None, 59: ',', 60: '(', 61: None, 62: None, 63: None
-}
+bcd = [
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 0, '=', '\'', 0, 0, 0,
+    '+', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 0, '.', ')', 0, 0, 0,
+    '-', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 0, '$', '*', 0, 0, 0,
+    ' ', '/', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 0, ',', '(', 0, 0, 0
+]
 
 # Conversion table from ASCII to BCD
-to_bcd = {}
-for c in range(64):  # ASCII range
-    if hollerith_encoding.get(c) is not None:
-        to_bcd[hollerith_encoding[c]] = c
+hollerith_encoding = [hollerith_undefined for n in range(256)]
+for c in range(len(bcd)):  # ASCII range
+    if bcd[c] is not 0:
+        p = ord(bcd[c])
+        hollerith_encoding[p] = c
+
 
 
 def hollerith_defined(c: str) -> bool:
@@ -48,8 +50,10 @@ def hollerith_defined(c: str) -> bool:
     :param c: Character to check
     :return: True if character is defined, False otherwise
     """
-    return c in hollerith_encoding
+    return hollerith_encoding[to_unsigned(c)] != hollerith_undefined
 
+def to_unsigned(c: str):
+    return ord(c) % 256
 
 def utf8_to_utf32(utf8_string):
     s = []
@@ -118,7 +122,7 @@ def filter_bcd(utf8_string):
         c = ch.upper()
         if c == '?' or c == '!':
             result.append('.')
-        elif c in to_bcd.keys():
+        elif c in bcd:
             result.append(c)
         else:
             result.append(non_bcd_replacement_char)
@@ -220,30 +224,23 @@ def hash(d: int, n: int) -> int:
 # */
 
 
-def last_chunk_as_bcd(s: str) -> int:
-    """
-    Given the last word in a sentence, the last_chunk_as_bcd function
-    will return the 36-bit Hollerith encoding of the word, appropriately
-    space padded, or the last chunk of the word if over 6 characters long.
-
-    :param s: Input string
-    :return: Hollerith encoding of the last chunk of the word
-    """
+def last_chunk_as_bcd(s):
     result = 0
-
-    def append(c: str) -> None:
-        nonlocal result
+    def append(c):
         assert hollerith_defined(c)
+        nonlocal result
         result <<= 6
-        result |= hollerith_encoding[c]
+        result |= hollerith_encoding[to_unsigned(c)]
 
     count = 0
     if s:
         for c in s[-((len(s) - 1) // 6) * 6:]:
             append(c)
             count += 1
+
     while count < 6:
         append(' ')
         count += 1
 
     return result
+

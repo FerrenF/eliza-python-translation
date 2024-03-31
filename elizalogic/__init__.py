@@ -148,14 +148,11 @@ def collect_tags(rules: ElizaConstant.RuleMap) -> ElizaConstant.TagMap:
             tags[tg] = v
     return tags
 
-def get_rule(rules: ElizaConstant.RuleMap, keyword: str) -> RuleBase:
+def get_rule(rules: ElizaConstant.RuleMap, keyword: str, **kwargs) -> RuleBase:
     rule = rules.get(keyword, None)
-    if not rule:
+    if not rule and kwargs.get('throw', True):
+        #Didn't find it.
         raise RuntimeError()
-
-    if not issubclass(rule.__class__, RuleBase):
-        raise RuntimeError()
-
     return rule
 
 def delimiter_character(c: str) -> bool:

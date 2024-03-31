@@ -310,7 +310,7 @@ bool hollerith_defined(char c)
     static_assert(std::numeric_limits<unsigned char>::min() == 0);
     static_assert(std::numeric_limits<unsigned char>::max() == 255);
 
-    return hollerith_encoding[static_cast<unsigned char>(c)] != hollerith_undefined;
+        return hollerith_encoding[static_cast<unsigned char>(c)] != hollerith_undefined;
 }
 
 

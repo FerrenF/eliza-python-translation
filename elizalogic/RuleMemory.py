@@ -5,6 +5,7 @@ from elizalogic import ElizaConstant
 from elizalogic.transform import Transform
 from elizalogic.RuleBase import RuleBase
 from elizalogic import reassemble, match, join
+from hollerith.encoding import last_chunk_as_bcd, hash
 
 
 class RuleMemory(RuleBase):
@@ -24,7 +25,9 @@ class RuleMemory(RuleBase):
         # // function on the last word of the user's input text.
         assert len(self.transformations) == self.num_transformations
 
-        transformation = self.transformations[hollerith.hash(hollerith.last_chunk_as_bcd(words[-1]), 2)]
+        lc = last_chunk_as_bcd(words[-1])
+        hsh = hash(lc, 2)
+        transformation = self.transformations[hsh]
         constituents:List[str] = []
         if not match(tags, transformation.decomposition, words, constituents):
             return
