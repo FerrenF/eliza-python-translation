@@ -2199,6 +2199,7 @@ public:
     // NONE messages instead is provided for attempts to reproduce conversations
     // with some non-Weizenbaum ELIZAs.)
     void set_use_nomatch_msgs(bool f) { use_nomatch_msgs_ = f; }
+    void set_use_nomatch_msgs(bool f) { use_nomatch_msgs_ = f; }
 
     void set_on_newkey_fail_use_none(bool f) { on_newkey_fail_use_none_ = f; }
     void set_use_limit(bool f) { limit_ = 2; }

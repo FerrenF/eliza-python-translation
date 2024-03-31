@@ -7,33 +7,47 @@ from typing import Dict, Optional
 from typing import List, Tuple, Dict
 
 import elizalogic.constant
+from elizalogic import split, get_rule
 from elizalogic.RuleMemory import RuleMemory
-from elizalogic import RuleMap, TagMap
 from elizalogic.tracer import NullTracer
-from elizalogic.util import split
 from hollerith.encoding import filter_bcd
 
 
 # this should be moved into the 'eliza' module
 
+def split_user_input(s, punctuation):
+    result = []
+    word = ''
+    for ch in s:
+        if ch == ' ' or ch in punctuation:
+            if word:
+                result.append(word)
+                word = ''
+            if ch != ' ':
+                result.append(ch)
+        else:
+            word += ch
+    if word:
+        result.append(word)
+    return result
 
 class Eliza:
 
-    nomatch_msgs_:List[str] = {
+    nomatch_msgs_:List[str] = [
     "PLEASE CONTINUE",
     "HMMM",
     "GO ON , PLEASE",
     "I SEE"
-}
-    def __init__(self, rules: RuleMap, mem_rule: RuleMemory):
+    ]
+
+    def __init__(self, rules: elizalogic.ElizaConstant.RuleMap, mem_rule: RuleMemory):
         self.rules = rules
         self.mem_rule = mem_rule
-        self.tags = elizalogic.util.collect_tags(rules)
+        self.tags = elizalogic.collect_tags(rules)
         self.limit = 1  # JW's "a certain counting mechanism," cycles through 1..4, then back to 1
         self.use_limit = True
-        self.delimiters = [",", ".", "BUT"]
         self.punctuation = ""
-
+        self.set_delimiters([",", ".", "BUT"])
 
         #  In the 1966 CACM ELIZA paper on page 41 Weizenbaum says
         #
@@ -106,7 +120,7 @@ class Eliza:
                     words = words.remove(word)
                     break
 
-            rule = self.rules.get(word)
+            rule = get_rule(self.rules, word)
             if rule:
 
                 if rule.has_transformation():
@@ -116,9 +130,9 @@ class Eliza:
                     else:
                         keystack.append(word)
 
-            substitute = rule.word_substitute(word)
-            self.trace.word_substitution(word, substitute)
-            words[idx] = substitute
+                substitute = rule.word_substitute(word)
+                self.trace.word_substitution(word, substitute)
+                words[idx] = substitute
 
         self.trace.subclause_complete(' '.join(words), keystack, self.rules)
         self.mem_rule.clear_trace()
@@ -187,7 +201,7 @@ class Eliza:
                     self.trace.newkey_failed("NONE")
                     break
 
-        none_rule = self.rules.get(elizalogic.SPECIAL_RULE_NONE)
+        none_rule = self.rules.get(elizalogic.ElizaConstant.SPECIAL_RULE_NONE)
         discard = ""
         none_rule.apply_transformation(words, self.tags, discard)
         self.trace.using_none(none_rule.to_string())
@@ -195,7 +209,7 @@ class Eliza:
 
     def _preprocess_input(self, input_str: str) -> List[str]:
         input_str = filter_bcd(input_str)
-        return split(input_str, self.punctuation)
+        return split_user_input(input_str, self.punctuation)
 
     def _is_delimiter(self, word: str) -> bool:
         return word in self.delimiters

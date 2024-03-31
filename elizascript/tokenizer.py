@@ -9,7 +9,7 @@ def _is_whitespace(ch):
 
 
 def _is_newline(ch):
-    return ch in (0x0A, 0x0B, 0x0C, 0x0D)
+    return ch in (0x0A, 0x0B, 0x0C, 0x0D, '\n')
 
 
 def _is_digit(ch):
@@ -52,15 +52,30 @@ class Tokenizer:
     def line(self):
         return self.line_number
 
-    def _readtok(self) -> Token:
-        ch = self.stream.read(1)
+    def _consume_newline(self, ch):
         while ch.isspace() or ch == '\n':
             if ch == '\n':
                 self.line_number += 1
             ch = self.stream.read(1)
+        return ch
+    def _readtok(self) -> Token:
+        ch = self.stream.read(1)
+        ch = self._consume_newline(ch)
 
-        if ch == '' or ch is None:
-            return Token(Token.Typ.EOF)
+        while(True):
+
+            if ch == '' or ch is None:
+                return Token(Token.Typ.EOF)
+
+            if ch == ';':
+                while not _is_newline(ch):
+                    ch = self.stream.read(1)
+                    if ch is None:
+                        return Token(Token.Typ.EOF)
+                ch = self._consume_newline(ch)
+            else:
+                break
+
         if ch == '(':
             return Token(Token.Typ.OPEN_BRACKET)
         if ch == ')':

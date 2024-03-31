@@ -1,14 +1,20 @@
+from collections import OrderedDict
 from typing import Dict, List
 
 import ctypes
 from typing import List, Dict
 from elizalogic.RuleBase import RuleBase
 from elizalogic.constant import ElizaConstant
+import re
+
 def join(s: List[str]) -> str:
     return ' '.join(s)
 
 def split(s: str, punctuation: str="") -> List[str]:
-    return s.split(punctuation)
+
+    spl = [*punctuation]
+    r = re.split("|".join(spl), s)
+    return r
 
 def to_int(s: str) -> int:
     result = 0
@@ -124,7 +130,7 @@ def match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matc
     return False, []
 
 def collect_tags(rules: ElizaConstant.RuleMap) -> ElizaConstant.TagMap:
-    tags: ElizaConstant.TagMap = dict()
+    tags: ElizaConstant.TagMap = OrderedDict()
     for tag, rule in rules.items():
         keyword_tags = rule.dlist_tags()
         for index, item in enumerate(keyword_tags):
@@ -139,7 +145,7 @@ def collect_tags(rules: ElizaConstant.RuleMap) -> ElizaConstant.TagMap:
             if tg in tags.keys() and len(tags[tg]):
                 v = tags[tg]
             v.append(ky)
-            tags.update({tg: v})
+            tags[tg] = v
     return tags
 
 def get_rule(rules: ElizaConstant.RuleMap, keyword: str) -> RuleBase:
