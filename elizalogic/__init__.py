@@ -7,6 +7,9 @@ from elizalogic.RuleBase import RuleBase
 from elizalogic.constant import ElizaConstant
 import re
 
+# CONTAINS ALL UTILITY FUNCTIONS
+
+
 def join(s: List[str]) -> str:
     return ' '.join(s)
 
