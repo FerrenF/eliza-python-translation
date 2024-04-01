@@ -5,7 +5,7 @@ import elizascript
 from elizalogic import ElizaConstant
 from elizalogic import collect_tags
 from elizascript import StringIOWithPeek
-from elizascript.eliza_script_reader import ElizaScriptReader, read_script
+from elizascript.eliza_script_reader import ElizaScriptReader
 from unittest.mock import patch
 
 from elizascript.script import script_to_string
@@ -213,7 +213,7 @@ class ScriptTest(unittest.TestCase):
         stream: StringIOWithPeek = StringIOWithPeek(self.script_text)
 
         try:
-            (status, s) = read_script(stream)
+            (status, s) = ElizaScriptReader.read_script(stream)
         except RuntimeError as e:
             print(f"Error loading script: {e.__str__()}")
             exit(2)
@@ -248,7 +248,7 @@ class ScriptTest(unittest.TestCase):
 
         for (sc, ex) in tests:
             try:
-                result = read_script(sc)
+                result = ElizaScriptReader.read_script(sc)
                 self.fail("Expected exception, but got result: {}".format(result))
             except Exception as e:
                 self.assertEqual(str(e), ex)

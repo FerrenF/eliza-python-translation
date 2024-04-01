@@ -2,7 +2,7 @@ import argparse
 import sys
 
 import elizascript.eliza_script_reader
-from eliza import Eliza
+from eliza.eliza import Eliza
 from elizascript.DOCTOR_1966_01_CACM import CACM_1966_01_DOCTOR_script
 
 def parse_cmdline():
@@ -10,7 +10,7 @@ def parse_cmdline():
     parser.add_argument('--nobanner', action='store_true', help="Don't display startup banner")
     parser.add_argument('--showscript', action='store_true', help="Print Weizenbaum's 1966 DOCTOR script and exit")
     parser.add_argument('--quick', action='store_true', help="Print responses without delay (IBM 2741 speed)")
-    parser.add_argument('--help', action='store_true', help="Show usage information")
+    #parser.add_argument('--help', action='store_true', help="Show usage information")
     parser.add_argument('--port', action='store_true', help="Use serial port for communication")
     parser.add_argument('--portname', metavar='PORT_NAME', help="Specify the serial port name (e.g., COM2)")
     parser.add_argument('script_filename', nargs='?', help="Specify the script file name")
@@ -58,7 +58,6 @@ def main():
         if not args.nobanner:
             print_banner()
 
-        eliza = Eliza()
         eliza_script = None
         if not args.script_filename:
             # Use default 'internal' 1966 CACM published script
@@ -78,6 +77,15 @@ def main():
                 print(f"{sys.argv[0]}: failed to open script file '{args.script_filename}'")
                 sys.exit(-1)
 
+
+        try:
+            status, script = elizascript.eliza_script_reader.ElizaScriptReader.read_script(eliza_script)
+        except RuntimeError as e:
+            print(f"Error loading script: {e.__str__()}")
+            exit(2)
+
+        eliza = Eliza(script.rules, script.mem_rule)
+
         if not args.nobanner:
             print("Enter a blank line to quit.\n")
         print("Enter a blank line to quit.\n")
@@ -92,20 +100,16 @@ def main():
                 command = user_input.split()[0]
                 # Handle special commands
                 if command == "*":
-                    print(eliza.get_trace())
+                    print(eliza.trace)
                 elif command == "**":
-                    print(eliza.get_transformation_rules())
-                # Add more command handlers as needed
+                    pass
+
                 else:
                     print("Unknown command. Commands are:\n")
                     print_command_help()
                 continue
 
-            response = eliza.generate_response(user_input)
-
-            # Simulate delay before printing response
-            time.sleep(1.5)
-
+            response = eliza.response(user_input)
             print(response)
 
     except Exception as e:

@@ -10,9 +10,14 @@ from elizascript.script import Script
 from elizascript.token import Token
 from elizascript.tokenizer import Tokenizer
 
-def read_script(stream: Any) -> Tuple[str, Script]:
+
+
+class ElizaScriptReader:
+
+    @staticmethod
+    def read_script(stream: Any) -> Tuple[str, Script]:
         if isinstance(stream, str):
-            return read_script(StringIOWithPeek(stream))
+            return ElizaScriptReader.read_script(StringIOWithPeek(stream))
 
         elif isinstance(stream, StringIOWithPeek):
             try:
@@ -24,7 +29,6 @@ def read_script(stream: Any) -> Tuple[str, Script]:
         else:
             raise TypeError("Invalid script type. NEED: str or IOStream")
 
-class ElizaScriptReader:
 
     def __init__(self, script_file: StringIOWithPeek):
 

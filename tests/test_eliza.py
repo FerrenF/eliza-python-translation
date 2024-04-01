@@ -3,7 +3,7 @@ import unittest
 import elizascript
 from eliza.eliza import Eliza
 from elizalogic import collect_tags, ElizaConstant, join
-from elizascript.eliza_script_reader import read_script
+from elizascript.eliza_script_reader import read_script, ElizaScriptReader
 from elizascript.DOCTOR_1966_01_CACM import CACM_1966_01_DOCTOR_script
 from elizascript.script import script_to_string
 from tests.cacm_1966_01_DOCTOR_TEST import CACM_1966_01_DOCTOR_test_script
@@ -19,7 +19,7 @@ class TestEliza(unittest.TestCase):
 
         r = CACM_1966_01_DOCTOR_script
         try:
-            status, script = read_script(r)
+            status, script = ElizaScriptReader.read_script(r)
         except RuntimeError as e:
             print(f"Error loading script: {e.__str__()}")
             exit(2)

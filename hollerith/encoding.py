@@ -1,47 +1,56 @@
-# Constants
-import ctypes
-import string
+from typing import List, Dict
 
-hollerith_undefined = 0xFF  # Must be > 63
+from hollerith.unsigned_char import HollerithChar
 
+hollerith_undefined = HollerithChar(0xFF)
 # "The 7090 BCD character codes are given in the accompanying table.
-#       Six bits are used for each character. [...] The code is generally
-#       termed binary-coded-decimal or BCD. For compactness, the codes are
-#       generally expressed as 2-digit octal numbers, as in the table. The
-#       term Hollerith is used synonomously with BCD." [1]
+#    Six bits are used for each character. [...] The code is generally
+#    termed binary-coded-decimal or BCD. For compactness, the codes are
+#    generally expressed as 2-digit octal numbers, as in the table. The
+#    term Hollerith is used synonomously with BCD." [1]
 #
-#       The following array is derived from the above mentioned table, with
-#       one exception: BCD code 14 (octal) is a single quote (prime), not a
-#       double quote. See [2].
+#    The following array is derived from the above mentioned table, with
+#    one exception: BCD code 14 (octal) is a single quote (prime), not a
+#    double quote. See [2].
 #
-#       The Hollerith code is the table offset. 0 means unused code.
+#    The Hollerith code is the table offset. 0 means unused code.
 #
-#       [1] Philip M. Sherman
-#           Programming and Coding the IBM 709-7090-7094 Computers
-#           John Wiley and Sons, 1963
-#           Page 62
-#       [2] University of Michigan Executive System for the IBM 7090 Computer
-#           September 1964
-#           In section THE UNIVERSITY OF MICHIGAN MONITOR
-#           APPENDIX 2, page 30, TABLE OF BCD--OCTAL EQUIVALENTS
-#           (Available online from Google Books. Search for PRIME.)
+#    [1] Philip M. Sherman
+#        Programming and Coding the IBM 709-7090-7094 Computers
+#        John Wiley and Sons, 1963
+#        Page 62
+#    [2] University of Michigan Executive System for the IBM 7090 Computer
+#        September 1964
+#        In section THE UNIVERSITY OF MICHIGAN MONITOR
+#        APPENDIX 2, page 30, TABLE OF BCD--OCTAL EQUIVALENTS
+#        (Available online from Google Books. Search for PRIME.)
 
-# Hollerith encoding table
-bcd = [
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 0, '=', '\'', 0, 0, 0,
-    '+', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 0, '.', ')', 0, 0, 0,
-    '-', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 0, '$', '*', 0, 0, 0,
-    ' ', '/', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 0, ',', '(', 0, 0, 0
+# from bitstring import Bits, BitArray, Bitstream, pack
+
+
+# You can find the table here: https://en.wikipedia.org/wiki/BCD_(character_encoding)
+bcd_table: List[int] = [
+    # N is the zero-based position of the column on each row, in hexidecimal [0..9 - A..F]
+    # character 1 in the first row has a hexidecimal value of 01, or a binary value of 0001.
+    # Similarly, 5, or 31 would have a value of 11 0001
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 0, '=', '\'', 0, 0, 0,  # 0x[xN] = hex __
+    '+', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 0, '.', ')',  0, 0, 0,  # 1x[xN]
+    '-', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 0, '$', '*',  0, 0, 0,  # 2x[xN]
+    ' ', '/', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 0, ',', '(',  0, 0, 0   # 3x[xN]
 ]
 
-# Conversion table from ASCII to BCD
-hollerith_encoding = [hollerith_undefined for n in range(256)]
-for c in range(len(bcd)):  # ASCII range
-    if bcd[c] is not 0:
-        p = ord(bcd[c])
-        hollerith_encoding[p] = c
 
+# 16 bit integer values for our bcd_characters
+to_bcd: Dict[str, int] = {}
+def get_hex(char: str):
+    value = hex(hollerith_undefined.value)
+    if char in bcd_table:
+        value = hex(bcd_table.index(char))
+    return value
 
+for n in range(256):
+    v = get_hex(chr(n))
+    to_bcd.update({chr(n): int(v, 16)})
 
 def hollerith_defined(c: str) -> bool:
     """
@@ -50,10 +59,8 @@ def hollerith_defined(c: str) -> bool:
     :param c: Character to check
     :return: True if character is defined, False otherwise
     """
-    return hollerith_encoding[to_unsigned(c)] != hollerith_undefined
+    return to_bcd.get(c) != hollerith_undefined.value
 
-def to_unsigned(c: str):
-    return ord(c) % 256
 
 def utf8_to_utf32(utf8_string):
     s = []
@@ -122,14 +129,12 @@ def filter_bcd(utf8_string):
         c = ch.upper()
         if c == '?' or c == '!':
             result.append('.')
-        elif c in bcd:
+        elif hollerith_defined(c):
             result.append(c)
         else:
             result.append(non_bcd_replacement_char)
 
     return ''.join(result) if len(result) else ''
-
-
 
 def hash(d: int, n: int) -> int:
     """
@@ -222,25 +227,39 @@ def hash(d: int, n: int) -> int:
 #     will return the 36-bit Hollerith encoding of the word, appropriately
 #     space padded, or the last chunk of the word if over 6 characters long.
 # */
+def six_bit_list_to_64_bit_representation(six_bit_list):
+    # Initialize the result as 0
+    result = 0
 
+    # Iterate over the six-bit integers in the list
+    for i, six_bit_integer in enumerate(six_bit_list):
+        # Shift the six-bit integer to its appropriate position
+        shifted_value = six_bit_integer << (6 * (len(six_bit_list) - 1 - i))
+
+        # Combine the shifted value with the result using bitwise OR
+        result |= shifted_value
+
+    return result
 
 def last_chunk_as_bcd(s):
-    result = 0
-    def append(c):
+    result = []
+    def append(c: str):
         assert hollerith_defined(c)
         nonlocal result
-        result <<= 6
-        result |= hollerith_encoding[to_unsigned(c)]
+
+        val = int(get_hex(c),16) % 64
+        result.append(val)
 
     count = 0
     if s:
-        for c in s[-((len(s) - 1) // 6) * 6:]:
+        cut = s[-((len(s) - 1) // 6) * 6:]
+        for c in cut:
             append(c)
             count += 1
 
     while count < 6:
         append(' ')
         count += 1
-
-    return result
+    r = six_bit_list_to_64_bit_representation(result)
+    return r
 
