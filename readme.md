@@ -22,9 +22,9 @@ It's destiny lies in the shape of GDscript.
    - eliza has been drafted, and is not complete.
    - match() is passing unit tests
    - eliza conversation unit test created, not passing
+   - Main program routine created
 
 ## To-do:
    - other utility functions need unit tests before proceeding to interpretation logic.
    - there are optimizations that can be made based on not being c++, without deviating from the goal
-   - util.py is merged into the module __init__.py and can be removed
-   - the old version of the tokenizer class can be removed (with caution)
+   - Something is messing up the responses generated.
