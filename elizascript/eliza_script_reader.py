@@ -100,6 +100,7 @@ class ElizaScriptReader:
     #         (0 YOUR 0 = BUT YOUR 3)
     #         (0 YOUR 0 = DOES THAT HAVE ANYTHING TO DO WITH THE FACT THAT YOUR 3))
     # */
+
     def read_memory_rule(self):
         t: Token = self.tokenizer.nexttok()
         if t.is_symbol("MEMORY"):
@@ -143,7 +144,6 @@ class ElizaScriptReader:
             return True
 
         return False
-
 
     def read_reassembly(self) -> List[List[str]]:
 

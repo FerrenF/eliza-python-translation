@@ -124,7 +124,7 @@ class Eliza:
                         self.trace.discard_subclause(' '.join(words[:idx]))
                     continue
                 else:
-                    words = words[:idx]
+                    #words = words[:idx]
                     break
 
             rule = get_rule(self.rules, word, throw=False)

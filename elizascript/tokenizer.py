@@ -83,7 +83,7 @@ class Tokenizer:
         if ch == '=':
             return Token(Token.Typ.SYMBOL, "=")
         if ch.isdigit():
-            value = ch
+            value = str(ch)
             while True:
                 peek_ch = self.stream.peek(1)
                 if peek_ch and peek_ch.isdigit():

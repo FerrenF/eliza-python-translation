@@ -26,7 +26,9 @@ class RuleKeyword(RuleBase):
 
         rule = None
         for item in self.transformations:
-            if match(tags, item.decomposition, words, constituents):
+            status, matches = match(tags, item.decomposition, words, constituents)
+            constituents = matches
+            if status:
                 rule = item
                 break
 

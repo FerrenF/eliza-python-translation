@@ -13,7 +13,7 @@ import re
 def join(s: List[str]) -> str:
     return ' '.join(s)
 
-def split(s: str, punctuation: str="") -> List[str]:
+def split(s: str, punctuation: str=" ") -> List[str]:
 
     spl = [*punctuation]
     r = re.split("|".join(spl), s)
@@ -61,12 +61,10 @@ def inlist(word: str, wordlist: str, tags: Dict[str, List[str]]) -> bool:
         return False
     elif cp.startswith('/'):
         cp = cp[1:]
-        taglist = cp.split()
-        for tag in taglist:
-            if tag in tags:
-                s = tags[tag]
-                if word in s:
-                    return True
+        tagList = tags.get(cp) or []
+
+        if word in tagList:
+            return True
         return False
     return False
 
@@ -88,9 +86,9 @@ def match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matc
         if patword[0] == '(':
             if not inlist(current_word, patword, tags):
             #if current_word not in tags.get(patword, []):
-                return False, []
+                return False, matching_components
         elif patword != current_word:
-            return False, []
+            return False, matching_components
 
         mc = []
         m, c = match(tags, pattern, words, mc)
@@ -113,15 +111,15 @@ def match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matc
                 matching_components.extend(c)
                 return True, matching_components
 
-            if not len(words):
-                return False, []
+            if not words:
+                return False, matching_components
             # If the above match fails, try matching with one fewer word
             w = words.pop(0)
             component.append(w)
 
     else:
         if len(words) < n:
-            return False, []
+            return False, matching_components
 
         component = [words.pop(0) for _ in range(n)]
         mc = []
@@ -130,7 +128,7 @@ def match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matc
             matching_components.append(join(component))
             matching_components.extend(c)
             return True, matching_components
-    return False, []
+    return False, matching_components
 
 def collect_tags(rules: ElizaConstant.RuleMap) -> ElizaConstant.TagMap:
     tags: ElizaConstant.TagMap = OrderedDict()
