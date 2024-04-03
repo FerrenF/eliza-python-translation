@@ -25,11 +25,13 @@ class RuleKeyword(RuleBase):
         constituents = []
 
         rule = None
+        _words = words.copy()
         for item in self.transformations:
-            status, matches = match(tags, item.decomposition, words, constituents)
-            constituents = matches
+            status, matches = match(tags, item.decomposition, _words, constituents)
+
             if status:
                 rule = item
+                constituents = matches
                 break
 
         if rule is None:

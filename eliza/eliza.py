@@ -87,8 +87,12 @@ class Eliza:
 
     def set_delimiters(self, delims: List[str]):
         self.delimiters = delims
+        self.punctuation = ""
         bcd_punctuation = "='+.)-$*/,("
-        self.punctuation = "".join(d[0] for d in delims if len(d) == 1 and d[0] in bcd_punctuation)
+
+        for d in delims:
+            if len(d) == 1 and d in bcd_punctuation:
+                self.punctuation += d
 
     # provide the user with a window into ELIZA's thought processes(!)
     def set_tracer(self, tracer):
@@ -115,7 +119,6 @@ class Eliza:
         iterator = enumerate(words)
         for idx, word in iterator:
             if self._is_delimiter(word):
-
                 if len(keystack) == 0:
                     self.trace.discard_subclause(word)
                     if self.mem_rule.memory_exists() and (not self.use_limit or self.limit == 4):
@@ -124,7 +127,8 @@ class Eliza:
                         self.trace.discard_subclause(' '.join(words[:idx]))
                     continue
                 else:
-                    #words = words[:idx]
+                    # Remove the punctuation at the end of the sentence.
+                    words.pop(idx)
                     break
 
             rule = get_rule(self.rules, word, throw=False)

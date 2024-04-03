@@ -68,7 +68,9 @@ def inlist(word: str, wordlist: str, tags: Dict[str, List[str]]) -> bool:
         return False
     return False
 
-def match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matching_components: List[str]) -> (bool, List[str]):
+def match(tags: Dict[str, List[str]], pattern: List[str], _words: List[str], matching_components: List[str]) -> (bool, List[str]):
+    words = _words.copy()
+
     matching_components.clear()
 
     if not pattern:
@@ -156,8 +158,9 @@ def get_rule(rules: ElizaConstant.RuleMap, keyword: str, **kwargs) -> RuleBase:
         raise RuntimeError()
     return rule
 
+
 def delimiter_character(c: str) -> bool:
-    return len(c) == 1 and c in ",."
+    return c in [',', '.']
 
 class RuleBase:
     def dlist_tags(self) -> List[str]:
