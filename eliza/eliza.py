@@ -116,8 +116,9 @@ class Eliza:
         keystack: List[str] = []
         top_rank = 0
 
-        iterator = enumerate(words)
-        for idx, word in iterator:
+        idx = 0
+        while idx < len(words) and words[idx]:
+            word = words[idx]
             if self._is_delimiter(word):
                 if len(keystack) == 0:
                     self.trace.discard_subclause(word)
@@ -125,10 +126,13 @@ class Eliza:
                         self.trace.using_memory(self.mem_rule.to_string())
                     else:
                         self.trace.discard_subclause(' '.join(words[:idx]))
+                    # discard to the left
+                    words = words[idx+1:]
+                    idx = 0
                     continue
                 else:
-                    # Remove the punctuation at the end of the sentence.
-                    words.pop(idx)
+                    # discard to the right
+                    words = words[:idx]
                     break
 
             rule = get_rule(self.rules, word, throw=False)
@@ -148,6 +152,8 @@ class Eliza:
                 substitute = rule.word_substitute(word)
                 self.trace.word_substitution(word, substitute)
                 words[idx] = substitute
+
+            idx += 1
 
         w = ' '.join(words or [])
         self.trace.subclause_complete(w, keystack, self.rules)

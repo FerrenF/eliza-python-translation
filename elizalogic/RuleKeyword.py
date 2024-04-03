@@ -31,7 +31,7 @@ class RuleKeyword(RuleBase):
 
             if status:
                 rule = item
-                constituents = matches
+                #constituents = matches
                 break
 
         if rule is None:
@@ -63,9 +63,10 @@ class RuleKeyword(RuleBase):
         # is it the special-case reassembly rule (PRE (reassembly) (=reference))
         # (note: this is the only reassembly_rule that is still in a list)
         if (len(reassembly_rule) > 0) and reassembly_rule[0] == "(":
-            reassembly = reassembly_rule[2:-1]
+            link_keyword = reassembly_rule[-3]
+            reassembly = reassembly_rule[3:reassembly_rule.index(')')]
+
             _words = reassemble(reassembly, constituents)
-            link_keyword = reassembly_rule[-1]
             return "linkkey", _words, link_keyword
 
         _words = reassemble(reassembly_rule, constituents)

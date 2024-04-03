@@ -105,6 +105,7 @@ def match(tags: Dict[str, List[str]], pattern: List[str], _words: List[str], mat
         # Loop until there are no more words left to try
         while True:
             # but first, we want to Try to match the remaining words with the pattern so we dont exhaust resources
+
             m, c = match(tags, pattern[:], words[:], mc)
             mc = c
             if m:
@@ -112,7 +113,6 @@ def match(tags: Dict[str, List[str]], pattern: List[str], _words: List[str], mat
                 matching_components.append(j)
                 matching_components.extend(c)
                 return True, matching_components
-
             if not words:
                 return False, matching_components
             # If the above match fails, try matching with one fewer word

@@ -2241,6 +2241,7 @@ public:
         int top_rank = 0;
         for (auto word = words.begin(); word != words.end(); ) {
             if (delimiter(*word)) {
+            if (delimiter(*word)) {
                 // keep only the first clause to contain a keyword [page 37 (c)]
                 if (keystack.empty()) {
                     // discard left of and including, continue scanning what remains
