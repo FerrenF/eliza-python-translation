@@ -10,7 +10,7 @@ import re
 # CONTAINS ALL UTILITY FUNCTIONS
 
 
-def join(s: List[str]) -> str:
+def join(s):
     return ' '.join(s)
 
 def split(s: str, punctuation: str=" ") -> List[str]:
@@ -79,27 +79,29 @@ def match(tags: Dict[str, List[str]], pattern: List[str], _words: List[str], mat
     patword = pattern.pop(0)
     n = to_int(patword)
 
-    if n < 0:
+    if n < 0: #  patword is e.g. "ARE" or "(*SAD HAPPY DEPRESSED)"
         if not words:
-            return False, []
+            return False, [] # patword cannot match nothing
 
         current_word = words.pop(0)
 
         if patword[0] == '(':
+            # patword is a group, is current_word in that group?
             if not inlist(current_word, patword, tags):
             #if current_word not in tags.get(patword, []):
                 return False, matching_components
         elif patword != current_word:
-            return False, matching_components
+            return False, matching_components # patword is a single word and it doesn't match
 
+        # so far so good; can we match remainder of pattern with remainder of words?
         mc = []
-        m, c = match(tags, pattern, words, mc)
+        m, c = match(tags, pattern[:], words[:], mc)
         if m:
             matching_components.append(current_word)
             matching_components.extend(c)
             return True, matching_components
 
-    elif n == 0:
+    elif n == 0: # 0 matches zero or more of any words
         component = []
         mc = []
         # Loop until there are no more words left to try
@@ -111,8 +113,9 @@ def match(tags: Dict[str, List[str]], pattern: List[str], _words: List[str], mat
             if m:
                 j = join(component)
                 matching_components.append(j)
-                matching_components.extend(c)
+                matching_components.extend(mc)
                 return True, matching_components
+
             if not words:
                 return False, matching_components
             # If the above match fails, try matching with one fewer word
@@ -120,12 +123,13 @@ def match(tags: Dict[str, List[str]], pattern: List[str], _words: List[str], mat
             component.append(w)
 
     else:
+
         if len(words) < n:
             return False, matching_components
 
         component = [words.pop(0) for _ in range(n)]
         mc = []
-        m, c = match(tags, pattern, words, mc)
+        m, c = match(tags, pattern[:], words[:], mc)
         if m:
             matching_components.append(join(component))
             matching_components.extend(c)

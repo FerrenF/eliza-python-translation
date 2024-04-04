@@ -27,7 +27,7 @@ class RuleKeyword(RuleBase):
         rule = None
         _words = words.copy()
         for item in self.transformations:
-            status, matches = match(tags, item.decomposition, _words, constituents)
+            status, matches = match(tags, item.decomposition[:], _words[:], constituents)
 
             if status:
                 rule = item
