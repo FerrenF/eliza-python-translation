@@ -1,10 +1,8 @@
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 
-import elizalogic.constant
 from .RuleBase import RuleBase
 from . import ElizaConstant
-from .transform import Transform
-from . import match, join, reassemble
+from . import match, reassemble
 
 
 class RuleKeyword(RuleBase):
@@ -108,7 +106,7 @@ class RuleKeyword(RuleBase):
     def trace_begin(self, words: List[str]) -> None:
         w = ' '.join(words or [])
         self.trace = ""
-        self.trace += f"{elizalogic.ElizaConstant.TRACE_PREFIX}keyword: {self.keyword}\n"
+        self.trace += f"{ElizaConstant.TRACE_PREFIX}keyword: {self.keyword}\n"
         self.trace += f"{ElizaConstant.TRACE_PREFIX}input: {w}\n"
 
     def trace_nomatch(self) -> None:

@@ -1,5 +1,5 @@
-from elizalogic.constant import ElizaConstant
-from elizalogic.transform import Transform
+from .constant import ElizaConstant
+from .transform import Transform
 from typing import List
 
 class RuleBase:
