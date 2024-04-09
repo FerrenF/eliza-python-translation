@@ -2,3 +2,4 @@
 CppProperties.json
 /.idea/
 /.idea/*
+*.pyc
