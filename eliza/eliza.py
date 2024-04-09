@@ -1,43 +1,18 @@
-import argparse
-import ctypes
-import sys
-import time
-from typing import Any
-from typing import Dict, Optional
-from typing import List, Tuple, Dict
+from typing import List
 
 import elizalogic.constant
-from elizalogic import split, get_rule, join
+from elizalogic import get_rule, join
 from elizalogic.RuleMemory import RuleMemory
 from elizalogic.tracer import NullTracer
 from hollerith.encoding import filter_bcd
 
 
-# this should be moved into the 'eliza' module
-
-def split_user_input(s, punctuation):
-    result = []
-    word = ''
-    for ch in s:
-        if ch == ' ' or ch in punctuation:
-            if word:
-                result.append(word)
-                word = ''
-            if ch != ' ':
-                result.append(ch)
-        else:
-            word += ch
-    if word:
-        result.append(word)
-    return result
-
 class Eliza:
-
-    nomatch_msgs_:List[str] = [
-    "PLEASE CONTINUE",
-    "HMMM",
-    "GO ON , PLEASE",
-    "I SEE"
+    nomatch_msgs_: List[str] = [
+        "PLEASE CONTINUE",
+        "HMMM",
+        "GO ON , PLEASE",
+        "I SEE"
     ]
 
     def __init__(self, rules: elizalogic.ElizaConstant.RuleMap, mem_rule: RuleMemory):
@@ -48,37 +23,12 @@ class Eliza:
         self.use_limit = True
         self.punctuation = ""
         self.set_delimiters([",", ".", "BUT"])
-
-        #  In the 1966 CACM ELIZA paper on page 41 Weizenbaum says
-        #
-        # "A serious problem which remains to be discussed is the reaction of
-        # the system in case no keywords remain to serve as transformation
-        # triggers. This can arise either in case the keystack is empty when
-        # NEWKEY is invoked or when the input text contained no keywords
-        # initially.
-        # "The simplest mechanism supplied is in the form of the special
-        # reserved keyword "NONE" which must be part of any script."
-        #
-        # However, the McGuire, Lorch, Quarton study conversations show that
-        # if the keystack is empty when NEWKEY is invoked the response is a
-        # nomatch message, not a NONE message.
         self.on_newkey_fail_use_none = True
-
-
-        # true use built-in error msgs (default); false use NONE messages instead
-        # (Weizenbaum's ELIZA used built-in error messages. The option to use
-        # NONE messages instead is provided for attempts to reproduce conversations
-        # with some non-Weizenbaum ELIZAs.)
         self.use_nomatch_msgs = True
-
 
         self.null_tracer = NullTracer()
         self.trace = self.null_tracer
 
-     # true use built-in error msgs (default); false use NONE messages instead
-     # (Weizenbaum's ELIZA used built-in error messages. The option to use
-     # NONE messages instead is provided for attempts to reproduce conversations
-     # with some non-Weizenbaum ELIZAs.)
     def set_use_nomatch_msgs(self, flag: bool):
         self.use_nomatch_msgs = flag
 
@@ -98,20 +48,18 @@ class Eliza:
     def set_tracer(self, tracer):
         self.trace = tracer if tracer else self.null_tracer
 
-    def response(self, input_str: str) -> str:
+    def response_list(self, input_str) -> List[str]:
 
+        input_str = filter_bcd(input_str)
         # for simplicity, convert the given input string to a list of uppercase words
         # e.g. "Hello, world!" -> ("HELLO" "," "WORLD" ".")
 
-        input_str = filter_bcd(input_str)
-
-        words = split_user_input(input_str, self.punctuation)
+        words = elizalogic.split_user_input(input_str, self.punctuation)
         self.trace.begin_response(words)
 
         # J W's "a certain counting mechanism" is updated for each response
         self.limit = (self.limit % 4) + 1
         self.trace.limit(self.limit, self._get_nomatch_msg())
-
 
         keystack: List[str] = []
         top_rank = 0
@@ -127,7 +75,7 @@ class Eliza:
                     else:
                         self.trace.discard_subclause(' '.join(words[:idx]))
                     # discard to the left
-                    words = words[idx+1:]
+                    words = words[idx + 1:]
                     idx = 0
                     continue
                 else:
@@ -161,15 +109,15 @@ class Eliza:
         self.trace.memory_stack(self.mem_rule.trace_memory_stack())
 
         if not keystack:
-                # a text without keywords; can we recall a MEMORY ? [page 41 (f)]
-                # JW's 1966 CACM paper refers to this decision as "a certain counting
-                # mechanism is in a particular state." The ELIZA code shows that the
-                # memory is recalled only when LIMIT has the value 4
+            # a text without keywords; can we recall a MEMORY ? [page 41 (f)]
+            # JW's 1966 CACM paper refers to this decision as "a certain counting
+            # mechanism is in a particular state." The ELIZA code shows that the
+            # memory is recalled only when LIMIT has the value 4
 
             if not self.use_limit or self.limit == 4:
                 if self.mem_rule.memory_exists():
                     self.trace.using_memory(self.mem_rule.to_string())
-                    return self.mem_rule.recall_memory()
+                    return [self.mem_rule.recall_memory()]
 
             # the keystack contains all keywords that occur in the given 'input';
             # apply transformation associated with the top keyword [page 39 (d)]
@@ -178,16 +126,14 @@ class Eliza:
             self.trace.pre_transform(top_keyword, words)
 
             rule = self.rules.get(top_keyword, None)
-            if not rule: # if (r == rules_.end())
+            if not rule:  # if (r == rules_.end())
                 if self.use_nomatch_msgs:
                     self.trace.unknown_key(top_keyword, True)
-                    return self._get_nomatch_msg()
+                    return [self._get_nomatch_msg()]
 
-                #e.g. could happen if a rule links to a non-existent keyword
+                # e.g. could happen if a rule links to a non-existent keyword
                 self.trace.unknown_key(top_keyword, False)
                 break
-
-
 
             # try to lay down a memory for future use
             self.mem_rule.create_memory(top_keyword, words, self.tags)
@@ -197,14 +143,14 @@ class Eliza:
             self.trace.transform(rule.trace, rule.to_string())
 
             if action == "complete":
-                return join(words)
+                return words
 
             if action == "inapplicable":
                 # no decomposition rule matched the input words; script error
                 self.trace.decomp_failed(self.use_nomatch_msgs)
                 if self.use_nomatch_msgs:
                     self.trace.decomp_failed(self.use_nomatch_msgs)
-                    return self._get_nomatch_msg()
+                    return [self._get_nomatch_msg()]
                 break
 
             assert action == "linkkey" or action == "newkey"
@@ -214,14 +160,14 @@ class Eliza:
                 keystack.insert(0, link_keyword)
 
             elif not keystack or not len(keystack):
-                 # newkey means try next highest keyword, but keystack is empty.
-                 # The 1966 CACM ELIZA paper, page 41, implies in this situation
-                 # a NONE message is used. The conversations in the Quarton pilot
-                 # study suggests that a built-in message is used.
+                # newkey means try next highest keyword, but keystack is empty.
+                # The 1966 CACM ELIZA paper, page 41, implies in this situation
+                # a NONE message is used. The conversations in the Quarton pilot
+                # study suggests that a built-in message is used.
 
                 if self.on_newkey_fail_use_none and self.use_nomatch_msgs:
                     self.trace.newkey_failed("built-in nomatch")
-                    return self._get_nomatch_msg()
+                    return [self._get_nomatch_msg()]
                 else:
                     self.trace.newkey_failed("NONE")
                     break
@@ -230,7 +176,10 @@ class Eliza:
         discard = ""
         none_rule.apply_transformation(words, self.tags, discard)
         self.trace.using_none(none_rule.to_string())
-        return ' '.join(words)
+        return words
+
+    def response(self, input_str: str) -> str:
+        return join(self.response_list(input_str))
 
     def _is_delimiter(self, word: str) -> bool:
         return word in self.delimiters
@@ -244,4 +193,3 @@ class Eliza:
     def _get_nomatch_msg(self) -> str:
         ind = self.limit - 1 % len(self.nomatch_msgs_)
         return Eliza.nomatch_msgs_[ind]
-

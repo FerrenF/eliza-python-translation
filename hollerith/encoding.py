@@ -227,6 +227,8 @@ def hash(d: int, n: int) -> int:
 #     will return the 36-bit Hollerith encoding of the word, appropriately
 #     space padded, or the last chunk of the word if over 6 characters long.
 # */
+
+# hehe, look at this hacky stuff
 def six_bit_list_to_64_bit_representation(six_bit_list):
     # Initialize the result as 0
     result = 0

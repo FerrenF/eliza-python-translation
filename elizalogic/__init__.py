@@ -8,6 +8,21 @@ from elizalogic.constant import ElizaConstant
 import re
 
 # CONTAINS ALL UTILITY FUNCTIONS
+def split_user_input(s, punctuation):
+    result = []
+    word = ''
+    for ch in s:
+        if ch == ' ' or ch in punctuation:
+            if word:
+                result.append(word)
+                word = ''
+            if ch != ' ':
+                result.append(ch)
+        else:
+            word += ch
+    if word:
+        result.append(word)
+    return result
 
 
 def join(s):
