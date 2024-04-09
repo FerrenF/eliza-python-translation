@@ -1,6 +1,6 @@
 from typing import List, Dict
 
-from hollerith.unsigned_char import HollerithChar
+from .unsigned_char import HollerithChar
 
 hollerith_undefined = HollerithChar(0xFF)
 # "The 7090 BCD character codes are given in the accompanying table.

@@ -1,14 +1,13 @@
-from io import StringIO
+
 from typing import List, Any, Tuple
 
 import elizalogic.constant
 from elizalogic.RuleKeyword import RuleKeyword
 from elizalogic.RuleMemory import RuleMemory
-from elizalogic.transform import Transform
-from elizascript import StringIOWithPeek
-from elizascript.script import Script
-from elizascript.token import Token
-from elizascript.tokenizer import Tokenizer
+from . import StringIOWithPeek
+from .script import Script
+from .token import Token
+from .tokenizer import Tokenizer
 
 
 

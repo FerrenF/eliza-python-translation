@@ -1,5 +1,4 @@
-import hollerith.encoding
-from hollerith import to_unsigned_int, to_unsigned
+from . import to_unsigned_int, to_unsigned
 
 
 class UnsignedChar:

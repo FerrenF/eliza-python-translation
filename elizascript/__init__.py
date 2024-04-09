@@ -1,7 +1,7 @@
 import io
 from typing import Any, Tuple
 
-from elizascript.script import Script
+from .script import Script
 
 class StringIOWithPeek(io.StringIO):
     def peek(self, size=1):

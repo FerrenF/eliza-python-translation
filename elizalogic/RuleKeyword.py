@@ -1,10 +1,10 @@
 from typing import List, Dict, Tuple
 
 import elizalogic.constant
-from elizalogic.RuleBase import RuleBase
-from elizalogic import ElizaConstant
-from elizalogic.transform import Transform
-from elizalogic import match, join, reassemble
+from .RuleBase import RuleBase
+from . import ElizaConstant
+from .transform import Transform
+from . import match, join, reassemble
 
 
 class RuleKeyword(RuleBase):
@@ -13,6 +13,7 @@ class RuleKeyword(RuleBase):
         super().__init__(keyword, word_substitution, precedence)
         self.tags = tags
         self.link_keyword = link_keyword
+
 
     def dlist_tags(self) -> List[str]:
         return self.tags

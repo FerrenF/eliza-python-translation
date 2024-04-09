@@ -1,7 +1,7 @@
 import io
 
-from elizascript import StringIOWithPeek
-from elizascript.token import Token
+from . import StringIOWithPeek
+from .token import Token
 
 
 def _is_whitespace(ch):

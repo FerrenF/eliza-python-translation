@@ -1,10 +1,9 @@
 from collections import OrderedDict
-from typing import Dict, List
 
 import ctypes
 from typing import List, Dict
-from elizalogic.RuleBase import RuleBase
-from elizalogic.constant import ElizaConstant
+from .RuleBase import RuleBase
+from .constant import ElizaConstant
 import re
 
 # CONTAINS ALL UTILITY FUNCTIONS

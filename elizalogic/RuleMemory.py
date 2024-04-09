@@ -1,10 +1,8 @@
 from typing import List, Dict
 
-import hollerith
-from elizalogic import ElizaConstant
-from elizalogic.transform import Transform
-from elizalogic.RuleBase import RuleBase
-from elizalogic import reassemble, match, join
+from . import ElizaConstant
+from .RuleBase import RuleBase
+from . import reassemble, match, join
 from hollerith.encoding import last_chunk_as_bcd, hash
 
 
