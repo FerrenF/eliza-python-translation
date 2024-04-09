@@ -1,7 +1,4 @@
-from typing import Dict, Optional, List, Any, OrderedDict
-from elizalogic import RuleBase
-
-
+from typing import Optional, List, Any, OrderedDict
 class ElizaConstant:
 
     RuleMap = OrderedDict[str, Optional[Any]]

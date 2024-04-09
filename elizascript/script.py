@@ -2,7 +2,7 @@ from typing import List, Dict
 
 from elizalogic.RuleKeyword import RuleKeyword
 from elizalogic.RuleMemory import RuleMemory
-from elizalogic import ElizaConstant, join
+from elizalogic import join
 
 
 ## SCRIPT: This class holds a parsed eliza profile, including a map of rules and a conversation memory.
