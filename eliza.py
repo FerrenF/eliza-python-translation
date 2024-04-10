@@ -1,10 +1,9 @@
-from typing import List
 
-import elizalogic.constant
-from elizalogic import get_rule, join
-from elizalogic.RuleMemory import RuleMemory
-from elizalogic.tracer import NullTracer
-from hollerith.encoding import filter_bcd
+from typing import List
+from elizalogic import join, RuleMemory, NullTracer
+from util import collect_tags, get_rule, split_user_input
+from encoding import filter_bcd
+from constant import RuleMap, SPECIAL_RULE_NONE
 
 
 class Eliza:
@@ -15,10 +14,10 @@ class Eliza:
         "I SEE"
     ]
 
-    def __init__(self, rules: elizalogic.ElizaConstant.RuleMap, mem_rule: RuleMemory):
+    def __init__(self, rules: RuleMap, mem_rule: RuleMemory):
         self.rules = rules
         self.mem_rule = mem_rule
-        self.tags = elizalogic.collect_tags(rules)
+        self.tags = collect_tags(rules)
         self.limit = 1  # JW's "a certain counting mechanism," cycles through 1..4, then back to 1
         self.use_limit = True
         self.punctuation = ""
@@ -54,7 +53,7 @@ class Eliza:
         # for simplicity, convert the given input string to a list of uppercase words
         # e.g. "Hello, world!" -> ("HELLO" "," "WORLD" ".")
 
-        words = elizalogic.split_user_input(input_str, self.punctuation)
+        words = split_user_input(input_str, self.punctuation)
         self.trace.begin_response(words)
 
         # J W's "a certain counting mechanism" is updated for each response
@@ -172,7 +171,7 @@ class Eliza:
                     self.trace.newkey_failed("NONE")
                     break
 
-        none_rule = self.rules.get(elizalogic.ElizaConstant.SPECIAL_RULE_NONE)
+        none_rule = self.rules.get(SPECIAL_RULE_NONE)
         discard = ""
         none_rule.apply_transformation(words, self.tags, discard)
         self.trace.using_none(none_rule.to_string())
@@ -193,3 +192,4 @@ class Eliza:
     def _get_nomatch_msg(self) -> str:
         ind = self.limit - 1 % len(self.nomatch_msgs_)
         return Eliza.nomatch_msgs_[ind]
+

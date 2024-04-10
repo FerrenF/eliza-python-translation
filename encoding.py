@@ -1,8 +1,5 @@
 from typing import List, Dict
-
-from .unsigned_char import HollerithChar
-
-hollerith_undefined = HollerithChar(0xFF)
+hollerith_undefined = 0xFF
 # "The 7090 BCD character codes are given in the accompanying table.
 #    Six bits are used for each character. [...] The code is generally
 #    termed binary-coded-decimal or BCD. For compactness, the codes are
@@ -39,11 +36,15 @@ bcd_table: List[int] = [
     ' ', '/', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 0, ',', '(',  0, 0, 0   # 3x[xN]
 ]
 
+def to_unsigned(c: str):
+    return ord(c) % 256
+def to_unsigned_int(c: int):
+    return c % 256
 
 # 16 bit integer values for our bcd_characters
 to_bcd: Dict[str, int] = {}
 def get_hex(char: str):
-    value = hex(hollerith_undefined.value)
+    value = hex(hollerith_undefined)
     if char in bcd_table:
         value = hex(bcd_table.index(char))
     return value
@@ -59,7 +60,7 @@ def hollerith_defined(c: str) -> bool:
     :param c: Character to check
     :return: True if character is defined, False otherwise
     """
-    return to_bcd.get(c) != hollerith_undefined.value
+    return to_bcd.get(c) != hollerith_undefined
 
 
 def utf8_to_utf32(utf8_string):

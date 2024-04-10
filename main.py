@@ -1,9 +1,9 @@
 import argparse
 import sys
 
-import elizascript.eliza_script_reader
-from eliza.eliza import Eliza
-from elizascript.DOCTOR_1966_01_CACM import CACM_1966_01_DOCTOR_script
+from elizascript import ElizaScriptReader
+from eliza import Eliza
+from DOCTOR_1966_01_CACM import CACM_1966_01_DOCTOR_script
 
 def parse_cmdline():
     parser = argparse.ArgumentParser(description="ELIZA -- A Computer Program for the Study of Natural Language Communication Between Man and Machine")
@@ -79,7 +79,7 @@ def main():
 
 
         try:
-            status, script = elizascript.eliza_script_reader.ElizaScriptReader.read_script(eliza_script)
+            status, script = ElizaScriptReader.read_script(eliza_script)
         except RuntimeError as e:
             print(f"Error loading script: {e.__str__()}")
             exit(2)

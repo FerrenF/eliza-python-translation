@@ -1,9 +1,9 @@
 from collections import OrderedDict
+from typing import Dict, List
 
 import ctypes
 from typing import List, Dict
-from .RuleBase import RuleBase
-from .constant import ElizaConstant
+from constant import TagMap, RuleMap
 import re
 
 # CONTAINS ALL UTILITY FUNCTIONS
@@ -150,8 +150,8 @@ def match(tags: Dict[str, List[str]], pattern: List[str], _words: List[str], mat
             return True, matching_components
     return False, matching_components
 
-def collect_tags(rules: ElizaConstant.RuleMap) -> ElizaConstant.TagMap:
-    tags: ElizaConstant.TagMap = OrderedDict()
+def collect_tags(rules: RuleMap) -> TagMap:
+    tags: TagMap = OrderedDict()
     for tag, rule in rules.items():
         keyword_tags = rule.dlist_tags()
         for index, item in enumerate(keyword_tags):
@@ -169,7 +169,14 @@ def collect_tags(rules: ElizaConstant.RuleMap) -> ElizaConstant.TagMap:
             tags[tg] = v
     return tags
 
-def get_rule(rules: ElizaConstant.RuleMap, keyword: str, **kwargs) -> RuleBase:
+class RuleBase:
+    def dlist_tags(self) -> List[str]:
+        pass
+
+    def to_string(self) -> str:
+        pass
+
+def get_rule(rules: RuleMap, keyword: str, **kwargs) -> RuleBase:
     rule = rules.get(keyword, None)
     if not rule and kwargs.get('throw', True):
         #Didn't find it.
@@ -180,9 +187,4 @@ def get_rule(rules: ElizaConstant.RuleMap, keyword: str, **kwargs) -> RuleBase:
 def delimiter_character(c: str) -> bool:
     return c in [',', '.']
 
-class RuleBase:
-    def dlist_tags(self) -> List[str]:
-        pass
 
-    def to_string(self) -> str:
-        pass

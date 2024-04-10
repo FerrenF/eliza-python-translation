@@ -10,7 +10,7 @@ A python translation of anthay's C++ code, with a focus on equivalent feature re
 ## Modules:
    - elizalogic      - responsible for storing the structures associated with eliza, and the utilities needed to maintain those structures
    - elizascript     - responsible for loading eliza script based on the structures and logic managed by elizalogic
-   - hollerith       - provides legacy utility related to the original eliza's input limitations
+   - encoding       - provides legacy utility related to the original eliza's input limitations
    - eliza           - responsible for interpreting the script and generating a response
 
 
@@ -21,6 +21,7 @@ A python translation of anthay's C++ code, with a focus on equivalent feature re
    - eliza has partially completed.
    - eliza conversation unit test created, not passing
    - Main program routine created
+   - Compacted
 
 ## To-do:
    - Something is wrong in complex transforms

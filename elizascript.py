@@ -1,13 +1,173 @@
-
+import io
+from typing import Any, Tuple, Dict
 from typing import List, Any, Tuple
+from io import StringIO
 
-import elizalogic.constant
-from elizalogic.RuleKeyword import RuleKeyword
-from elizalogic.RuleMemory import RuleMemory
-from . import StringIOWithPeek
-from .script import Script
-from .token import Token
-from .tokenizer import Tokenizer
+from elizalogic import RuleKeyword, RuleMemory, Transform
+from constant import TagMap, SPECIAL_RULE_NONE
+from util import join
+
+
+
+
+def _is_whitespace(ch):
+    return ch <= 0x20 or ch == 0x7F or chr(ch).isspace()
+
+
+def _is_newline(ch):
+    return ch in (0x0A, 0x0B, 0x0C, 0x0D, '\n')
+
+
+def _is_digit(ch):
+    return chr(ch).isdigit()
+
+
+def _check_if_not_symbol(ch):
+    return ch in (ord('('), ord(')'), ord(';')) or _is_whitespace(ch)
+
+class StringIOWithPeek(io.StringIO):
+    def peek(self, size=1):
+        current_position = self.tell()
+        data = self.read(size)
+        self.seek(current_position)
+        return data
+
+
+## SCRIPT: This class holds a parsed eliza profile, including a map of rules and a conversation memory.
+
+class Script:
+
+    def __init__(self):
+        # ELIZA's opening remarks e.g. "HOW DO YOU DO.  PLEASE TELL ME YOUR PROBLEM"
+        self.hello_message: List[str] = []
+        # maps keywords -> transformation rules
+        self.rules: Dict[str, RuleKeyword] = {}
+        # the one and only special case MEMORY rule.
+        self.mem_rule: RuleMemory = RuleMemory()
+
+def script_to_string(s: Script):
+    result = str()
+    result += "(" + join(s.hello_message) + ")\n"
+    for (k, v) in s.rules.items():
+        result += v.to_string()
+    result += s.mem_rule.to_string()
+    return result
+
+
+class Token:
+    class Typ:
+        EOF = 'eof'
+        SYMBOL = 'symbol'
+        NUMBER = 'number'
+        OPEN_BRACKET = 'open_bracket'
+        CLOSE_BRACKET = 'close_bracket'
+
+    def __init__(self, t: str = Typ.EOF, value: str = ''):
+        self.t = t
+        self.value = value
+
+    def is_symbol(self, v=None):
+        if v:
+            return self.t == self.Typ.SYMBOL and self.value == v
+        return self.t == self.Typ.SYMBOL
+
+    def is_number(self):
+        return self.t == self.Typ.NUMBER
+
+    def is_open(self):
+        return self.t == self.Typ.OPEN_BRACKET
+
+    def is_close(self):
+        return self.t == self.Typ.CLOSE_BRACKET
+
+    def is_eof(self):
+        return self.t == self.Typ.EOF
+
+    def __eq__(self, other):
+        return isinstance(other, Token) and self.t == other.t and self.value == other.value
+
+
+
+
+
+class Tokenizer:
+    def __init__(self, script_stream: StringIOWithPeek):
+        self.stream: StringIOWithPeek = script_stream
+        self.line_number: int = 1
+
+    def peektok(self) -> Token:
+        pos = self.stream.tell()
+        mline = self.line_number
+        ch = self.stream.peek(1)
+        if not ch:
+            return Token(Token.Typ.EOF)
+
+        tok = self._readtok()
+        pos2 = self.stream.tell()
+        ch2 = self.stream.peek(1)
+
+        ret = pos2 - (pos2 - pos)
+        self.stream.seek(ret, io.SEEK_SET)
+        self.line_number = mline
+        ch2 = self.stream.peek(1)
+        return tok
+
+    def nexttok(self) -> Token:
+        ch = self.stream.peek(1)
+        if not ch:
+            return Token(Token.Typ.EOF)
+        return self._readtok()
+
+    def line(self):
+        return self.line_number
+
+    def _consume_newline(self, ch):
+        while ch.isspace() or ch == '\n':
+            if ch == '\n':
+                self.line_number += 1
+            ch = self.stream.read(1)
+        return ch
+    def _readtok(self) -> Token:
+        ch = self.stream.read(1)
+        ch = self._consume_newline(ch)
+
+        while(True):
+
+            if ch == '' or ch is None:
+                return Token(Token.Typ.EOF)
+
+            if ch == ';':
+                while not _is_newline(ch):
+                    ch = self.stream.read(1)
+                    if ch is None:
+                        return Token(Token.Typ.EOF)
+                ch = self._consume_newline(ch)
+            else:
+                break
+
+        if ch == '(':
+            return Token(Token.Typ.OPEN_BRACKET)
+        if ch == ')':
+            return Token(Token.Typ.CLOSE_BRACKET)
+        if ch == '=':
+            return Token(Token.Typ.SYMBOL, "=")
+        if ch.isdigit():
+            value = str(ch)
+            while True:
+                peek_ch = self.stream.peek(1)
+                if peek_ch and peek_ch.isdigit():
+                    value += peek_ch
+                    self.stream.read(1)
+                else:
+                    break
+            return Token(Token.Typ.NUMBER, value)
+        value = ch
+
+        while self.stream.peek(1) and not _check_if_not_symbol(ord(self.stream.peek(1))) and self.stream.peek(1) != '=':
+            value += self.stream.read(1)
+        return Token(Token.Typ.SYMBOL, value)
+
+
 
 
 
@@ -43,7 +203,7 @@ class ElizaScriptReader:
             pass
 
         # Check if the script meets the minimum requirements
-        if elizalogic.ElizaConstant.SPECIAL_RULE_NONE not in self.script.rules:
+        if SPECIAL_RULE_NONE not in self.script.rules:
             raise RuntimeError("Script error: no NONE rule specified; see Jan 1966 CACM page 41")
         if not self.script.mem_rule.is_valid():
             raise RuntimeError("Script error: no MEMORY rule specified; see Jan 1966 CACM page 41")
@@ -177,7 +337,7 @@ class ElizaScriptReader:
         if t.is_symbol():
             keyword = t.value
             if keyword == "NONE":
-                keyword = elizalogic.ElizaConstant.SPECIAL_RULE_NONE
+                keyword = SPECIAL_RULE_NONE
 
             if keyword in self.script.rules:
                 raise RuntimeError(f"keyword rule already specified for keyword '{keyword}'")
@@ -267,3 +427,4 @@ class ElizaScriptReader:
             return self.read_memory_rule()
 
         return self.read_keyword_rule()
+
