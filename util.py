@@ -3,7 +3,7 @@ from typing import Dict, List
 
 import ctypes
 from typing import List, Dict
-from constant import TagMap, RuleMap
+from .constant import TagMap, RuleMap
 import re
 
 # CONTAINS ALL UTILITY FUNCTIONS

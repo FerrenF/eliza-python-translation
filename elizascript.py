@@ -3,9 +3,9 @@ from typing import Any, Tuple, Dict
 from typing import List, Any, Tuple
 from io import StringIO
 
-from elizalogic import RuleKeyword, RuleMemory, Transform
-from constant import TagMap, SPECIAL_RULE_NONE
-from util import join
+from .elizalogic import RuleKeyword, RuleMemory, Transform
+from .constant import TagMap, SPECIAL_RULE_NONE
+from .util import join
 
 
 
