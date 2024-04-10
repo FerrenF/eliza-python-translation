@@ -25,3 +25,4 @@ A python translation of anthay's C++ code, with a focus on equivalent feature re
 
 ## To-do:
    - Something is wrong in complex transforms
+   - Tests need to be refactored for the compacted branch
