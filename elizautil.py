@@ -3,6 +3,7 @@ from typing import Dict, List
 
 import ctypes
 from typing import List, Dict
+
 from elizaconstant import TagMap, RuleMap
 import re
 

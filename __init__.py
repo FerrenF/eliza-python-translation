@@ -1,6 +1,4 @@
-import elizaconstant
-import elizaencoding
-import elizautil
-import elizalogic
-import elizascript
-import eliza
+import os, sys
+
+current = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(current)
