@@ -2,9 +2,9 @@ import io
 from typing import Dict
 from typing import List, Any, Tuple
 
-from constant import SPECIAL_RULE_NONE
+from elizaconstant import SPECIAL_RULE_NONE
 from elizalogic import RuleKeyword, RuleMemory
-from util import join
+from elizautil import join
 
 
 def _is_whitespace(ch):

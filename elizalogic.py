@@ -2,9 +2,9 @@ from abc import abstractmethod, ABC
 from typing import List
 from typing import Tuple, Dict
 
-from constant import TRACE_PREFIX, TagMap, SPECIAL_RULE_NONE, RuleMap
-from encoding import last_chunk_as_bcd, hash
-from util import reassemble, join, match
+from elizaconstant import TRACE_PREFIX, TagMap, SPECIAL_RULE_NONE, RuleMap
+from elizaencoding import last_chunk_as_bcd, hash
+from elizautil import reassemble, join, match
 
 
 class RuleBase:

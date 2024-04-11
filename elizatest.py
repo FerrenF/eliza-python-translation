@@ -1,7 +1,7 @@
 import unittest
 
-from constant import TagMap
-from util import inlist, match, to_int
+from elizaconstant import TagMap
+from elizautil import inlist, match, to_int
 
 
 class TestInList(unittest.TestCase):
@@ -670,7 +670,7 @@ class TestReassamble(unittest.TestCase):
         assert result == expected
 
 
-from encoding import hash, last_chunk_as_bcd
+from elizaencoding import hash, last_chunk_as_bcd
 
 
 class HashTest(unittest.TestCase):
@@ -702,7 +702,7 @@ class HashTest(unittest.TestCase):
         self.assertEqual(hash(0, 7), 0)
 
 
-from encoding import filter_bcd
+from elizaencoding import filter_bcd
 
 
 class bcdTest(unittest.TestCase):
@@ -766,7 +766,7 @@ class bcdTest(unittest.TestCase):
 
 
 from eliza import Eliza
-from util import collect_tags, join
+from elizautil import collect_tags, join
 from elizascript import ElizaScriptReader
 from DOCTOR_1966_01_CACM import CACM_1966_01_DOCTOR_script
 import elizascript
