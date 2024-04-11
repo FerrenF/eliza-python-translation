@@ -3,7 +3,7 @@ from typing import Dict, List
 
 import ctypes
 from typing import List, Dict
-from .constant import TagMap, RuleMap
+from constant import TagMap, RuleMap
 import re
 
 # CONTAINS ALL UTILITY FUNCTIONS
@@ -74,11 +74,15 @@ def inlist(word: str, wordlist: str, tags: Dict[str, List[str]]) -> bool:
                 return True
         return False
     elif cp.startswith('/'):
-        cp = cp[1:]
-        tagList = tags.get(cp) or []
+        cp = cp[1:].strip()
+        s = cp.split()
+        for w in s:
+            if w in tags:
+                tagList = tags.get(w) or []
+                if word in tagList:
+                    return True
 
-        if word in tagList:
-            return True
+
         return False
     return False
 

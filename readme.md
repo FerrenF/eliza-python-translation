@@ -1,28 +1,14 @@
-
-
-
-Recent Major Push: Mar 30, 2024
-
-# Eliza, GDit
 A python translation of anthay's C++ code, with a focus on equivalent feature representation and the acceptance of scripts with original documented formatting.
 
 
 ## Modules:
-   - elizalogic      - responsible for storing the structures associated with eliza, and the utilities needed to maintain those structures
+   - elizalogic      - responsible for storing the structures associated with eliza
    - elizascript     - responsible for loading eliza script based on the structures and logic managed by elizalogic
-   - encoding       - provides legacy utility related to the original eliza's input limitations
+   - encoding        - provides utility related to BCD encoding
    - eliza           - responsible for interpreting the script and generating a response
-
-
-## Progress:
-   - elizascript core functionality passes all unit tests
-   - hollerith passes all unit tests
-   - elizalogic passes all unit tests
-   - eliza has partially completed.
-   - eliza conversation unit test created, not passing
-   - Main program routine created
-   - Compacted
+   - util            - contains utility functions
+   - elizatest       - contains unit tests
 
 ## To-do:
    - Something is wrong in complex transforms
-   - Tests need to be refactored for the compacted branch
+   - Make the commands actually work

@@ -1,13 +1,10 @@
 import io
-from typing import Any, Tuple, Dict
+from typing import Dict
 from typing import List, Any, Tuple
-from io import StringIO
 
-from .elizalogic import RuleKeyword, RuleMemory, Transform
-from .constant import TagMap, SPECIAL_RULE_NONE
-from .util import join
-
-
+from constant import SPECIAL_RULE_NONE
+from elizalogic import RuleKeyword, RuleMemory
+from util import join
 
 
 def _is_whitespace(ch):

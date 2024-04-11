@@ -1,9 +1,10 @@
 
 from typing import List
-from .elizalogic import join, RuleMemory, NullTracer
-from .util import collect_tags, get_rule, split_user_input
-from .encoding import filter_bcd
-from .constant import RuleMap, SPECIAL_RULE_NONE
+
+from constant import RuleMap, SPECIAL_RULE_NONE
+from elizalogic import join, RuleMemory, NullTracer
+from encoding import filter_bcd
+from util import collect_tags, get_rule, split_user_input
 
 
 class Eliza:

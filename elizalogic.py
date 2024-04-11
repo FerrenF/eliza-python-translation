@@ -1,11 +1,10 @@
-from typing import List, Tuple, Dict
-
-from .encoding import last_chunk_as_bcd, hash
-from .constant import TRACE_PREFIX, TagMap, SPECIAL_RULE_NONE, RuleMap
-from .util import reassemble, join, split, match
-
 from abc import abstractmethod, ABC
 from typing import List
+from typing import Tuple, Dict
+
+from constant import TRACE_PREFIX, TagMap, SPECIAL_RULE_NONE, RuleMap
+from encoding import last_chunk_as_bcd, hash
+from util import reassemble, join, match
 
 
 class RuleBase:
