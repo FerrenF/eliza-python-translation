@@ -174,8 +174,8 @@ class Eliza:
 
         none_rule = self.rules.get(SPECIAL_RULE_NONE)
         discard = ""
-        none_rule.apply_transformation(words, self.tags, discard)
-        self.trace.using_none(none_rule.to_string())
+        none_status, none_rule, none_keyword = none_rule.apply_transformation(words, self.tags, discard)
+        self.trace.using_none(join(none_rule))
         return words
 
     def response(self, input_str: str) -> str:
