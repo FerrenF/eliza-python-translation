@@ -61,11 +61,12 @@ class RuleKeyword(RuleBase):
 
     def apply_transformation(self, words: List[str], tags: TagMap, link_keyword: str) -> Tuple[str, List[str], str]:
         self.trace_begin(words)
-        constituents = []
 
+        constituents = []
         rule = None
         _words = words.copy()
         for item in self.transformations:
+
             status, matches = match(tags, item.decomposition[:], _words[:], constituents)
 
             if status:

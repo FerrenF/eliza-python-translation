@@ -59,7 +59,7 @@ def reassemble(reassembly_rule: List[str], components: List[str]) -> List[str]:
         elif n == 0 or n > len(components):
             result.append("THINGY")
         else:
-            expanded = split(components[n - 1])
+            expanded = components[n - 1:]
             result.extend(expanded)
     return result
 
@@ -87,8 +87,7 @@ def inlist(word: str, wordlist: str, tags: Dict[str, List[str]]) -> bool:
         return False
     return False
 
-def match(tags: Dict[str, List[str]], pattern: List[str], _words: List[str], matching_components: List[str]) -> (bool, List[str]):
-    words = _words.copy()
+def match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matching_components: List[str]) -> (bool, List[str]):
 
     matching_components.clear()
 
@@ -103,14 +102,13 @@ def match(tags: Dict[str, List[str]], pattern: List[str], _words: List[str], mat
             return False, [] # patword cannot match nothing
 
         current_word = words.pop(0)
-
         if patword[0] == '(':
             # patword is a group, is current_word in that group?
             if not inlist(current_word, patword, tags):
-            #if current_word not in tags.get(patword, []):
-                return False, matching_components
+                return False, []
+
         elif patword != current_word:
-            return False, matching_components # patword is a single word and it doesn't match
+            return False, [] # patword is a single word and it doesn't match
 
         # so far so good; can we match remainder of pattern with remainder of words?
         mc = []
@@ -123,10 +121,7 @@ def match(tags: Dict[str, List[str]], pattern: List[str], _words: List[str], mat
     elif n == 0: # 0 matches zero or more of any words
         component = []
         mc = []
-        # Loop until there are no more words left to try
         while True:
-            # but first, we want to Try to match the remaining words with the pattern so we dont exhaust resources
-
             m, c = match(tags, pattern[:], words[:], mc)
             mc = c
             if m:
@@ -136,15 +131,15 @@ def match(tags: Dict[str, List[str]], pattern: List[str], _words: List[str], mat
                 return True, matching_components
 
             if not words:
-                return False, matching_components
-            # If the above match fails, try matching with one fewer word
+                return False, []
+
             w = words.pop(0)
             component.append(w)
 
     else:
 
         if len(words) < n:
-            return False, matching_components
+            return False, []
 
         component = [words.pop(0) for _ in range(n)]
         mc = []
@@ -153,7 +148,7 @@ def match(tags: Dict[str, List[str]], pattern: List[str], _words: List[str], mat
             matching_components.append(join(component))
             matching_components.extend(c)
             return True, matching_components
-    return False, matching_components
+    return False, []
 
 def collect_tags(rules: RuleMap) -> TagMap:
     tags: TagMap = OrderedDict()
