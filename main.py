@@ -84,8 +84,9 @@ def main():
             print(f"Error loading script: {e.__str__()}")
             exit(2)
 
-        eliza = Eliza(script.rules, script.mem_rule)
+        eliza = Eliza(script)
 
+        print(eliza.get_greeting())
         if not args.nobanner:
             print("Enter a blank line to quit.\n")
         print("Enter a blank line to quit.\n")

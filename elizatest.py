@@ -798,7 +798,7 @@ class TestEliza(unittest.TestCase):
         self.assertEqual(join(tags["FAMILY"]), "MOTHER MOM DAD FATHER SISTER BROTHER WIFE CHILDREN")
         self.assertEqual(join(tags["NOUN"]), "MOTHER FATHER")
 
-        eliza = Eliza(script.rules, script.mem_rule)
+        eliza = Eliza(script)
         for exchg in cacm_1966_conversation:
             (prompt, response) = exchg
             actualResponse = eliza.response(prompt)

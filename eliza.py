@@ -1,8 +1,7 @@
-
 from typing import List
 
-from elizaconstant import RuleMap, SPECIAL_RULE_NONE
-from elizalogic import join, RuleMemory, NullTracer
+from elizaconstant import SPECIAL_RULE_NONE
+from elizalogic import join, NullTracer
 from elizaencoding import filter_bcd
 from elizautil import collect_tags, get_rule, split_user_input
 
@@ -15,10 +14,12 @@ class Eliza:
         "I SEE"
     ]
 
-    def __init__(self, rules: RuleMap, mem_rule: RuleMemory):
-        self.rules = rules
-        self.mem_rule = mem_rule
-        self.tags = collect_tags(rules)
+    def __init__(self, script):
+
+        self.greetings = script.hello_message
+        self.rules = script.rules
+        self.mem_rule = script.mem_rule
+        self.tags = collect_tags(self.rules)
         self.limit = 1  # JW's "a certain counting mechanism," cycles through 1..4, then back to 1
         self.use_limit = True
         self.punctuation = ""
@@ -189,6 +190,9 @@ class Eliza:
             self.trace.using_memory(self.mem_rule.to_string())
         else:
             self.trace.discard_subclause(' '.join(words[:idx]))
+
+    def get_greeting(self) -> str:
+        return join(self.greetings) or "Hello."
 
     def _get_nomatch_msg(self) -> str:
         ind = self.limit - 1 % len(self.nomatch_msgs_)
