@@ -4,7 +4,7 @@ from typing import List, Any, Tuple
 
 from elizaconstant import SPECIAL_RULE_NONE
 from elizalogic import RuleKeyword, RuleMemory
-from elizautil import join
+from elizautil import elz_join
 
 
 def _is_whitespace(ch):
@@ -44,7 +44,7 @@ class Script:
 
 def script_to_string(s: Script):
     result = str()
-    result += "(" + join(s.hello_message) + ")\n"
+    result += "(" + elz_join(s.hello_message) + ")\n"
     for (k, v) in s.rules.items():
         result += v.to_string()
     result += s.mem_rule.to_string()

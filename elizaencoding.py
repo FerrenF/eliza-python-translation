@@ -255,9 +255,14 @@ def last_chunk_as_bcd(s):
 
     count = 0
     if s:
-        cut = s[-((len(s) - 1) // 6) * 6:]
-        for c in cut:
-            append(c)
+        while len(s) > 6:
+            s = s[6:]
+                #append(ch)
+                #count += 1
+
+        #cut = s[-((len(s) - 1) // 6) * 6:]
+        for ch in s:
+            append(ch)
             count += 1
 
     while count < 6:

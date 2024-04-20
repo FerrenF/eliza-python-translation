@@ -681,7 +681,7 @@ class HashTest(unittest.TestCase):
         self.assertEqual(last_chunk_as_bcd("X"), int(0o676060606060))  # X _ _ _ _ _
         self.assertEqual(last_chunk_as_bcd("HERE"), int(0o302551256060))  # H E R E _ _
         self.assertEqual(last_chunk_as_bcd("ALWAYS"), int(0o214366217062))  # A L W A Y S
-        # self.assertEqual(last_chunk_as_bcd("INVENTED"), int(0o252460606060))# E D _ _ _ _ # why doesnt this one pass
+        self.assertEqual(last_chunk_as_bcd("INVENTED"), int(0o252460606060))# E D _ _ _ _ # why doesnt this one pass
         self.assertEqual(last_chunk_as_bcd("123456ABCDEF"), int(0o212223242526))  # A B C D E F
 
     def test_real_world_cases(self):
@@ -766,7 +766,7 @@ class bcdTest(unittest.TestCase):
 
 
 from eliza import Eliza
-from elizautil import collect_tags, join
+from elizautil import collect_tags, elz_join
 from elizascript import ElizaScriptReader
 from DOCTOR_1966_01_CACM import CACM_1966_01_DOCTOR_script
 import elizascript
@@ -794,9 +794,9 @@ class TestEliza(unittest.TestCase):
 
         tags: TagMap = collect_tags(script.rules)
         self.assertEqual(len(tags), 3)
-        self.assertEqual(join(tags["BELIEF"]), "FEEL THINK BELIEVE WISH")
-        self.assertEqual(join(tags["FAMILY"]), "MOTHER MOM DAD FATHER SISTER BROTHER WIFE CHILDREN")
-        self.assertEqual(join(tags["NOUN"]), "MOTHER FATHER")
+        self.assertEqual(elz_join(tags["BELIEF"]), "FEEL THINK BELIEVE WISH")
+        self.assertEqual(elz_join(tags["FAMILY"]), "MOTHER MOM DAD FATHER SISTER BROTHER WIFE CHILDREN")
+        self.assertEqual(elz_join(tags["NOUN"]), "MOTHER FATHER")
 
         eliza = Eliza(script)
         for exchg in cacm_1966_conversation:
@@ -836,7 +836,9 @@ class TestEliza(unittest.TestCase):
         ]
 
         for exchg in imagined_continuation_2023:
-            self.assertEqual(eliza.response(exchg[0]), exchg[1])
+
+            (response, real) = (eliza.response(exchg[0]), exchg[1])
+            self.assertEqual(response, real)
 
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ from typing import Tuple, Dict
 
 from elizaconstant import TRACE_PREFIX, TagMap, SPECIAL_RULE_NONE, RuleMap
 from elizaencoding import last_chunk_as_bcd, hash
-from elizautil import reassemble, join, match
+from elizautil import reassemble, elz_join, match
 
 
 class RuleBase:
@@ -187,11 +187,11 @@ class RuleMemory(RuleBase):
         lc = last_chunk_as_bcd(words[-1])
         hsh = hash(lc, 2)
         transformation = self.transformations[hsh]
-        constituents:List[str] = []
-        if not match(tags, transformation.decomposition, words, constituents):
+        constituents: List[str] = []
+        if not match(tags, transformation.decomposition, words[::], constituents):
             return
 
-        new_memory = join(reassemble(transformation.reassembly_rules[0], constituents))
+        new_memory = elz_join(reassemble(transformation.reassembly_rules[0], constituents))
         self.trace += f"{TRACE_PREFIX}new memory: {new_memory}\n"
         self.memories.append(new_memory)
 
@@ -345,7 +345,7 @@ class NullTracer(Tracer):
 # Pre tracer class
 class PreTracer(NullTracer):
     def pre_transform(self, keyword: str, words: List[str]) -> None:
-        print(join(words), "   :", keyword)
+        print(elz_join(words), "   :", keyword)
 
 
 # String tracer class
@@ -359,7 +359,7 @@ class StringTracer(NullTracer):
         self.trace_ = ""
         self.script_ = ""
         self.word_substitutions_ = ""
-        self.trace_ += "input: " + join(words) + '\n'
+        self.trace_ += "input: " + elz_join(words) + '\n'
 
     def limit(self, limit: int, built_in_msg: str) -> None:
         self.trace_ += "LIMIT: " + str(limit) + " (" + built_in_msg + ")\n"

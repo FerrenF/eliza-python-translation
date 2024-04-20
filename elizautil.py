@@ -25,14 +25,11 @@ def split_user_input(s, punctuation):
     return result
 
 
-def join(s):
+def elz_join(s):
     return ' '.join(s)
 
-def split(s: str, punctuation: str=" ") -> List[str]:
-
-    spl = [*punctuation]
-    r = re.split("|".join(spl), s)
-    return r
+def elz_split(s: str) -> List[str]:
+    return s.split(' ')
 
 def to_int(s: str) -> int:
     result = 0
@@ -59,7 +56,8 @@ def reassemble(reassembly_rule: List[str], components: List[str]) -> List[str]:
         elif n == 0 or n > len(components):
             result.append("THINGY")
         else:
-            expanded = components[n - 1:]
+            j = components[n - 1]
+            expanded = elz_split(j)
             result.extend(expanded)
     return result
 
@@ -125,7 +123,7 @@ def match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matc
             m, c = match(tags, pattern[:], words[:], mc)
             mc = c
             if m:
-                j = join(component)
+                j = elz_join(component)
                 matching_components.append(j)
                 matching_components.extend(mc)
                 return True, matching_components
@@ -145,7 +143,7 @@ def match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matc
         mc = []
         m, c = match(tags, pattern[:], words[:], mc)
         if m:
-            matching_components.append(join(component))
+            matching_components.append(elz_join(component))
             matching_components.extend(c)
             return True, matching_components
     return False, []
