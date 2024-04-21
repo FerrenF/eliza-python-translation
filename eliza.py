@@ -55,7 +55,7 @@ class Eliza:
         :return: str
         """
         if not hasattr(self.trace, "text") or self.trace is NullTracer:
-            return "No text associated with trace, or Null Trace."
+            return "Null Trace"
         return self.trace.text()
 
     def response_list(self, input_str) -> List[str]:
