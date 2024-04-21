@@ -1,6 +1,7 @@
 import argparse
 import sys
 
+from elizalogic import StringTracer, NullTracer, PreTracer
 from elizascript import ElizaScriptReader
 from eliza import Eliza
 from DOCTOR_1966_01_CACM import CACM_1966_01_DOCTOR_script
@@ -29,22 +30,14 @@ def print_command_help():
     print(        "  <blank line>    quit\n")
     print(        "  *               print trace of most recent exchange\n")
     print(        "  **              print the transformation rules used in the most recent reply\n")
-    print(        "  *cacm           replay conversation from Weizenbaum's Jan 1966 CACM paper\n")
-    print(        "  *key            show all keywords in the current script\n")
-    print(        "  *key KEYWORD    show the transformation rule for the given KEYWORD\n")
+   # print(        "  *cacm           replay conversation from Weizenbaum's Jan 1966 CACM paper\n")
+   # print(        "  *key            show all keywords in the current script\n")
+   # print(        "  *key KEYWORD    show the transformation rule for the given KEYWORD\n")
     print(        "  *traceoff       turn off tracing\n")
     print(        "  *traceon        turn on tracing; enter '*' after any exchange to see trace\n")
     print(        "  *traceauto      turn on tracing; trace shown after every exchange\n")
     print(        "  *tracepre       show input sentence prior to applying transformation\n")
     print(        "                  (for watching the operation of Turing machines)\n")
-
-
-#   The ELIZA script contains the opening_remarks followed by rules.
-#   (The formal syntax is given in the elizascript namespace below.)
-#   There are two types of rule: keyword_rule and memory_rule. They
-#   are represented by the following classes. */
-#
-#  interface and data shared by both rules
 
 
 def load_script_from_file(script_file):
@@ -85,10 +78,13 @@ def main():
             exit(2)
 
         eliza = Eliza(script)
-
+        trace = StringTracer()
+        no_trace = NullTracer()
+        pre_trace = PreTracer()
+        eliza.set_tracer(no_trace)
         print(eliza.get_greeting())
-        if not args.nobanner:
-            print("Enter a blank line to quit.\n")
+        #if not args.nobanner:
+            #print("Enter a blank line to quit.\n")
         print("Enter a blank line to quit.\n")
 
         while True:
@@ -98,13 +94,23 @@ def main():
                 break
 
             if user_input.startswith('*'):
+                user_input = user_input[1:]
                 command = user_input.split()[0]
-                # Handle special commands
                 if command == "*":
-                    print(eliza.trace)
+                    print(trace.text())
                 elif command == "**":
-                    pass
-
+                    print(trace.script())
+                elif command == "traceon":
+                    eliza.set_tracer(trace)
+                    print("Tracing enabled\n")
+                elif command == "traceoff":
+                    eliza.set_tracer(no_trace)
+                    print("Tracing disabled\n")
+                    trace.clear()
+                elif command == "tracepre":
+                    eliza.set_tracer(pre_trace)
+                    print("Tracing PRE enabled\n")
+                    trace.clear()
                 else:
                     print("Unknown command. Commands are:\n")
                     print_command_help()
@@ -115,8 +121,6 @@ def main():
 
     except Exception as e:
         print("Exception:", e)
-
-
 
 if __name__ == "__main__":
     main()
