@@ -49,6 +49,15 @@ class Eliza:
     def set_tracer(self, tracer):
         self.trace = tracer if tracer else self.null_tracer
 
+    def get_tracer_text(self) -> str:
+        """
+        Returns tracer text if there is any, otherwise returns an error string.
+        :return: str
+        """
+        if not hasattr(self.trace, "text") or self.trace is NullTracer:
+            return "No text associated with trace, or Null Trace."
+        return self.trace.text()
+
     def response_list(self, input_str) -> List[str]:
 
         input_str = filter_bcd(input_str)

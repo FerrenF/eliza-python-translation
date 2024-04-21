@@ -1,4 +1,4 @@
-A python translation of anthay's C++ code. Find that here, and thank him because he did a lot more research than I did: https://github.com/anthay/ELIZA
+A python translation of Anthay's C++ code. Find that here, and thank them because them did a lot more research than I did: https://github.com/anthay/ELIZA
 
 ## Requirements:
 Built-ins are the only thing you need. Tested on python 3.7.
@@ -23,6 +23,7 @@ Built-ins are the only thing you need. Tested on python 3.7.
     - [DOCTOR_1966_01_CACM.py](DOCTOR_1966_01_CACM.py) - The original doctor script.
     - [cacm_1966_conversation.py](cacm_1966_conversation.py) - For testing purposes.
     - [cacm_1966_01_DOCTOR_TEST.py](cacm_1966_01_DOCTOR_TEST.py) - Comment stripped original script for testing purposes.
+
 ## Preview
 ![img.png](img.png)
 

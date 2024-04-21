@@ -97,7 +97,7 @@ def main():
                 user_input = user_input[1:]
                 command = user_input.split()[0]
                 if command == "*":
-                    print(trace.text())
+                    print(eliza.get_tracer_text())
                 elif command == "**":
                     print(trace.script())
                 elif command == "traceon":
