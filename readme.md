@@ -1,4 +1,4 @@
-A python translation of Anthay's C++ code. Find that here, and thank them because them did a lot more research than I did: https://github.com/anthay/ELIZA
+A python translation of Anthay's C++ code. Find that here, and thank them because they did a lot more research than I did: https://github.com/anthay/ELIZA
 
 ## Requirements:
 Built-ins are the only thing you need. Tested on python 3.7.
