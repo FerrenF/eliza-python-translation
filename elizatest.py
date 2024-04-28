@@ -1,7 +1,7 @@
 import unittest
 
 from elizaconstant import TagMap
-from elizautil import inlist, match, to_int
+from elizautil import inlist, recursive_match, to_int, slip_match
 
 
 class TestInList(unittest.TestCase):
@@ -65,6 +65,268 @@ class TestToInt(unittest.TestCase):
         self.assertEqual(to_int("int"), -1)
 
 
+class TestMadMatchFunction(unittest.TestCase):
+
+    def run_test_case(self, words, pattern, expected, equality=True, tags={}):
+        success, matching_components = slip_match(tags, pattern, words)
+        self.assertEqual(success, equality)
+        self.assertEqual(matching_components, expected)
+
+    def test_mad_match_function(self):
+        test_cases = [
+            # Test case 1
+            (["HELLO", "WORLD"], ["0", "0", "WORLD"], ["", "HELLO", "WORLD"], True),
+            # Test case 2
+            (["HELLO", "WORLD"], ["0", "0", "1"], ["", "HELLO", "WORLD"], True),
+            # Test case 3
+            (["HELLO", "WORLD"], ["HELLO", "0", "0", "WORLD"], ["HELLO", "", "", "WORLD"], True),
+            # Test case 4
+            (["'ELLO", "'ELLO"], ["0", "'ELLO"], ["'ELLO", "'ELLO"], True),
+            # Test case 5
+            (["'ELLO", "'ELLO"], ["0", "'ELLO", "0"], ["", "'ELLO", "'ELLO"], True),
+            # Test case 6
+            (["YOU", "NEED", "NICE", "FOOD"], ["0", "YOU", "(*WANT NEED)", "0"], ["", "YOU", "NEED", "NICE FOOD"], True),
+            # Test case 7
+            (["YOU", "WANT", "NICE", "FOOD"], ["0", "0", "YOU", "(*WANT NEED)", "0"],
+             ["", "", "YOU", "WANT", "NICE FOOD"], True),
+            # Test case 8
+            (["YOU", "WANT", "NICE", "FOOD"], ["1", "(*WANT NEED)", "0"], ["YOU", "WANT", "NICE FOOD"], True),
+            # Test case 9
+            (["YOU", "WANT", "NICE", "FOOD"], ["1", "(*WANT NEED)", "1"], [], False),
+            # Test case 10
+            (["YOU", "WANT", "NICE", "FOOD"], ["1", "(*WANT NEED)", "2"], ["YOU", "WANT", "NICE FOOD"], True),
+            # Test case 11
+
+            (["CONSIDER", "YOUR", "AGED", "MOTHER", "AND", "FATHER", "TOO"],
+             ["0", "YOUR", "0", "(* FATHER MOTHER)", "0"],
+             ["CONSIDER", "YOUR", "AGED", "MOTHER", "AND FATHER TOO"],
+             True),
+
+            # Test case 12
+            (["MOTHER", "AND", "FATHER", "MOTHER"],
+             ["0", "(* FATHER MOTHER)", "(* FATHER MOTHER)", "0"],
+             ["MOTHER AND", "FATHER", "MOTHER", ""],
+             True),
+
+            # Test case 13
+            (["FIRST", "AND", "LAST", "TWO", "WORDS"],
+             ["2", "0", "2"],
+             ["FIRST AND", "LAST", "TWO WORDS"],
+             True),
+
+            # Test case 14
+            (["THE", "NAME", "IS", "BOND", "JAMES", "BOND", "OR", "007", "IF", "YOU", "PREFER"],
+             ["0", "0", "7"],
+             ["", "THE NAME IS BOND", "JAMES BOND OR 007 IF YOU PREFER"],
+             True),
+
+            # Test case 15
+            (["ITS", "MARY", "ITS", "NOT", "MARY", "IT", "IS", "MARY", "TOO"],
+             ["0", "ITS", "0", "MARY", "1"],
+             ["", "ITS", "MARY ITS NOT MARY IT IS", "MARY", "TOO"],
+             True),
+
+            # Test case 16
+            (["YOU", "KNOW", "THAT", "I", "KNOW", "YOU", "HATE", "I", "AND", "YOU", "LIKE", "I", "TOO"],
+             ["0", "YOU", "0", "I", "0"],
+             ["", "YOU", "KNOW THAT", "I", "KNOW YOU HATE I AND YOU LIKE I TOO"],
+             True),
+
+            # Test case 17
+            (["MARY", "HAD", "A", "LITTLE", "LAMB", "ITS", "PROBABILITY", "WAS", "ZERO"],
+             ["MARY", "2", "2", "ITS", "1", "0"],
+             ["MARY", "HAD A", "LITTLE LAMB", "ITS", "PROBABILITY", "WAS ZERO"],
+             True),
+
+            # Test case 18
+            (["MARY", "HAD", "A", "LITTLE", "LAMB", "ITS", "PROBABILITY", "WAS", "ZERO"],
+             ["1", "0", "2", "ITS", "0"],
+             ["MARY", "HAD A", "LITTLE LAMB", "ITS", "PROBABILITY WAS ZERO"],
+             True),
+
+            # Test case 19
+            ([], [], [], True),
+
+            # Test case 20
+            ([], ["0"], [""], True),
+
+            # Test case 21
+            (["MARY", "HAD", "A", "LITTLE", "LAMB"], ["MARY", "HAD", "A", "LITTLE", "LAMB"],
+             ["MARY", "HAD", "A", "LITTLE", "LAMB"], True),
+
+            # Test case 22
+            (["HAD", "MARY", "A", "LITTLE", "LAMB"], ["MARY", "HAD", "A", "LITTLE", "LAMB"], [], False),
+
+            # Test case 23
+            (["MARY", "HAD", "A", "LAMB"], ["MARY", "HAD", "A", "LITTLE", "LAMB"], [], False),
+
+            # Test case 24
+            (["MARY", "HAD", "A", "LITTLE", "LAMB", "CALLED", "WOOLY"], ["MARY", "HAD", "A", "LITTLE", "LAMB"], [],
+             False),
+
+            # Test case 25
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["WHEN", "WILL", "2", "MEET"],
+             ["WHEN", "WILL", "WE THREE", "MEET"], True),
+
+            # Test case 26
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["WHEN", "1", "2", "MEET"], ["WHEN", "WILL", "WE THREE", "MEET"],
+             True),
+
+            # Test case 27
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["1", "1", "2", "1"], ["WHEN", "WILL", "WE THREE", "MEET"], True),
+
+            # Test case 28
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["3", "2"], ["WHEN WILL WE", "THREE MEET"], True),
+
+            # Test case 29
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["3", "0"], ["WHEN WILL WE", "THREE MEET"], True),
+
+            # Test case 30
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["5"], ["WHEN WILL WE THREE MEET"], True),
+
+            # Test case 31
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["0", "5"], ["", "WHEN WILL WE THREE MEET"], True),
+
+            # Test case 32
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["5", "0"], ["WHEN WILL WE THREE MEET", ""], True),
+
+            # Test case 33
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["1", "0"], ["WHEN", "WILL WE THREE MEET"], True),
+
+            # Test case 34
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["0", "1"], ["WHEN WILL WE THREE", "MEET"], True),
+
+            # Test case 35
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["1", "1", "0"], ["WHEN", "WILL", "WE THREE MEET"], True),
+
+            # Test case 36
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["0", "1", "0"], ["", "WHEN", "WILL WE THREE MEET"], True),
+
+            # Test case 37
+            (
+            ["WHEN", "WILL", "WE", "THREE", "MEET"], ["0", "1", "0", "1"], ["", "WHEN", "WILL WE THREE", "MEET"],
+            True),
+
+            # Test case 38
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["0", "1", "0", "1", "0"],
+             ["", "WHEN", "", "WILL", "WE THREE MEET"], True),
+
+            # Test case 39
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["0", "1", "0", "1", "0", "1"],
+             ["", "WHEN", "", "WILL", "WE THREE", "MEET"], True),
+
+            # Test case 40
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["0", "1", "0", "1", "0", "1", "0"],
+             ["", "WHEN", "", "WILL", "", "WE", "THREE MEET"], True),
+
+            # Test case 41
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["0", "1", "0", "1", "0", "1", "0", "1"],
+             ["", "WHEN", "", "WILL", "", "WE", "THREE", "MEET"], True),
+
+            # Test case 42
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["0", "1", "0", "1", "0", "1", "0", "1", "0"],
+             ["", "WHEN", "", "WILL", "", "WE", "", "THREE", "MEET"], True),
+
+            # Test case 43
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["0", "1", "0", "1", "0", "1", "0", "1", "0", "1"],
+             ["", "WHEN", "", "WILL", "", "WE", "", "THREE", "", "MEET" ], True),
+
+            # Test case 44
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["0", "1", "0", "1", "0", "1", "0", "1", "0", "1", "0"],
+             ["", "WHEN", "", "WILL", "", "WE", "", "THREE", "", "MEET", "" ], True),
+
+            # Test case 45
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["0", "1", "0", "1", "0", "1", "0", "1", "0", "1", "0", "1"], [],
+             False),
+
+            # Test case 46
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["6"], [], False),
+
+
+
+            # Test case 47
+            (["WHEN", "WILL", "WE", "THREE", "MEET"], ["1", "WHEN", "0"], [], False),
+
+            # Test case 48
+            (["IT'S", "MY", "EASTEREGG", "YUM"], ["1", "1", "1", "0", "1"], ["IT'S", "MY", "EASTEREGG", "", "YUM"],
+             True),
+
+            # Test case 49
+            (["IT'S", "MY", "EASTEREGG", "YUM"], ["IT'S", "1", "1", "0", "1"], ["IT'S", "MY", "EASTEREGG", "", "YUM"],
+             True),
+
+            # Test case 50
+            (["IT'S", "MY", "EASTEREGG", "YUM"], ["1", "MY", "1", "0", "1"], ["IT'S", "MY", "EASTEREGG", "", "YUM"],
+             True),
+
+            # Test case 51
+            (["IT'S", "MY", "EASTEREGG", "YUM"], ["1", "1", "EASTEREGG", "0", "1"],
+             ["IT'S", "MY", "EASTEREGG", "", "YUM"], True),
+
+            # Test case 52
+            (["IT'S", "MY", "EASTEREGG", "YUM"], ["1", "MY", "EASTEREGG", "0", "1"],
+             ["IT'S", "MY", "EASTEREGG", "", "YUM"], True),
+
+            # Test case 53
+            (["IT'S", "MY", "EASTEREGG", "YUM"], ["IT'S", "MY", "EASTEREGG", "0", "1"],
+             ["IT'S", "MY", "EASTEREGG", "", "YUM"], True),
+
+            # Test case 54
+            (["IT'S", "MY", "EASTEREGG", "YUM"], ["IT'S", "MY", "EASTEREGG", "YUM"], ["IT'S", "MY", "EASTEREGG", "YUM"],
+             True),
+
+            # Test case 55
+            (["X", "X", "A", "X", "X", "A"], ["0", "A", "0", "A"], ["X X", "A", "X X", "A"], True),
+
+            # Test case 56
+            (["X", "X", "A", "X", "X", "A", "X", "X", "A"], ["0", "A", "0", "A"], ["X X", "A", "X X A X X", "A"], True),
+
+            # Test case 57
+            (
+            ["X", "X", "A", "X", "X", "A", "X", "X", "A"], ["0", "A", "0", "A", "0"], ["X X", "A", "X X", "A", "X X A"],
+            True),
+
+            # Test case 58
+            (["MY", "FAIR", "LADY"], ["MY", "(*FAIR GOOD)", "LADY"], ["MY", "FAIR", "LADY"], True),
+
+            # Test case 59
+            (["MY", "GOOD", "LADY"], ["MY", "(*FAIR GOOD)", "LADY"], ["MY", "GOOD", "LADY"], True),
+
+            # Test case 60
+            (["MY", "LADY"], ["MY", "(*FAIR GOOD)", "LADY"], [], False),
+
+            # Test case 61
+            (["MY", "FAIR", "GOOD", "LADY"], ["MY", "(*FAIR GOOD)", "LADY"], [], False),
+
+
+        ]
+
+        for words, pattern, expected, equality in test_cases:
+            with self.subTest(words=words, pattern=pattern, expected=expected, equality=equality):
+                self.run_test_case(words, pattern, expected, equality)
+
+        tag_map = dict({ "FAMILY" : ["MOTHER", "FATHER"],
+        "NOUN" : ["MOTHER", "FATHER"],
+        "BELIEF" : ["FEEL"]})
+        extended_test_cases = [
+            # Test case 62
+            (["MY", "MOTHER", "LOVES", "ME"], ["0", "(/FAMILY)", "0"], ["MY", "MOTHER", "LOVES ME"], True),
+
+            # Test case 63
+            (["MY", "MOTHER", "LOVES", "ME"], ["0", "(/NOUN)", "0"], ["MY", "MOTHER", "LOVES ME"], True),
+
+            # Test case 64
+            (["MY", "MOTHER", "LOVES", "ME"], ["0", "(/BELIEF FAMILY)", "0"], ["MY", "MOTHER", "LOVES ME"], True),
+
+            # Test case 65
+            (["MY", "MOTHER", "LOVES", "ME"], ["0", "(/BELIEF)", "0"], [], False),
+        ]
+
+        for words, pattern, expected, equality in extended_test_cases:
+            with self.subTest(words=words, pattern=pattern, expected=expected, equality=equality, tags=tag_map):
+                self.run_test_case(words, pattern, expected, equality, tags=tag_map)
+
+
 class TestMatch(unittest.TestCase):
     def setUp(self):
         self.tags = {
@@ -81,34 +343,34 @@ class TestMatch(unittest.TestCase):
         expected = ["", "YOU", "NEED", "NICE FOOD"]
         matching_components = []
 
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(c, expected)
 
         words = ["YOU", "WANT", "NICE", "FOOD"]
         pattern = ["0", "0", "YOU", "(*WANT NEED)", "0"]
         expected = ["", "", "YOU", "WANT", "NICE FOOD"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(c, expected)
 
         words = ["YOU", "WANT", "NICE", "FOOD"]
         pattern = ["1", "(*WANT NEED)", "0"]
         expected = ["YOU", "WANT", "NICE FOOD"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(c, expected)
 
         words = ["YOU", "WANT", "NICE", "FOOD"]
         pattern = ["1", "(*WANT NEED)", "1"]
         matching_components = []
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertFalse(m)
 
         words = ["YOU", "WANT", "NICE", "FOOD"]
         pattern = ["1", "(*WANT NEED)", "2"]
         expected = ["YOU", "WANT", "NICE FOOD"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(c, expected)
 
@@ -125,14 +387,14 @@ class TestMatch(unittest.TestCase):
         words = ["CONSIDER", "YOUR", "AGED", "MOTHER", "AND", "FATHER", "TOO"]
         pattern = ["0", "YOUR", "0", "(* FATHER MOTHER)", "0"]
         expected = ["CONSIDER", "YOUR", "AGED", "MOTHER", "AND FATHER TOO"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(c, expected)
 
         words = ["MOTHER", "AND", "FATHER", "MOTHER"]
         pattern = ["0", "(* FATHER MOTHER)", "(* FATHER MOTHER)", "0"]
         expected = ["MOTHER AND", "FATHER", "MOTHER", ""]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(c, expected)
 
@@ -145,7 +407,7 @@ class TestMatch(unittest.TestCase):
         words = ["FIRST", "AND", "LAST", "TWO", "WORDS"]
         pattern = ["2", "0", "2"]
         expected = ["FIRST AND", "LAST", "TWO WORDS"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -153,7 +415,7 @@ class TestMatch(unittest.TestCase):
         words = ["THE", "NAME", "IS", "BOND", "JAMES", "BOND", "OR", "007", "IF", "YOU", "PREFER"]
         pattern = ["0", "0", "7"]
         expected = ["", "THE NAME IS BOND", "JAMES BOND OR 007 IF YOU PREFER"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -161,7 +423,7 @@ class TestMatch(unittest.TestCase):
         words = ["ITS", "MARY", "ITS", "NOT", "MARY", "IT", "IS", "MARY", "TOO"]
         pattern = ["0", "ITS", "0", "MARY", "1"]
         expected = ["", "ITS", "MARY ITS NOT MARY IT IS", "MARY", "TOO"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -169,7 +431,7 @@ class TestMatch(unittest.TestCase):
         words = ["YOU", "KNOW", "THAT", "I", "KNOW", "YOU", "HATE", "I", "AND", "YOU", "LIKE", "I", "TOO"]
         pattern = ["0", "YOU", "0", "I", "0"]  # from the I rule in the DOCTOR script
         expected = ["", "YOU", "KNOW THAT", "I", "KNOW YOU HATE I AND YOU LIKE I TOO"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -177,7 +439,7 @@ class TestMatch(unittest.TestCase):
         words = ["MARY", "HAD", "A", "LITTLE", "LAMB", "ITS", "PROBABILITY", "WAS", "ZERO"]
         pattern = ["MARY", "2", "2", "ITS", "1", "0"]
         expected = ["MARY", "HAD A", "LITTLE LAMB", "ITS", "PROBABILITY", "WAS ZERO"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -185,7 +447,7 @@ class TestMatch(unittest.TestCase):
         words = ["MARY", "HAD", "A", "LITTLE", "LAMB", "ITS", "PROBABILITY", "WAS", "ZERO"]
         pattern = ["1", "0", "2", "ITS", "0"]
         expected = ["MARY", "HAD A", "LITTLE LAMB", "ITS", "PROBABILITY WAS ZERO"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -193,7 +455,7 @@ class TestMatch(unittest.TestCase):
         words = list()
         pattern = list()
         expected = list()
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -201,7 +463,7 @@ class TestMatch(unittest.TestCase):
         words = list()
         pattern = ["0"]
         expected = [""]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -209,7 +471,7 @@ class TestMatch(unittest.TestCase):
         words = ["MARY", "HAD", "A", "LITTLE", "LAMB"]
         pattern = ["MARY", "HAD", "A", "LITTLE", "LAMB"]
         expected = ["MARY", "HAD", "A", "LITTLE", "LAMB"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -217,7 +479,7 @@ class TestMatch(unittest.TestCase):
         words = ["HAD", "MARY", "A", "LITTLE", "LAMB"]
         pattern = ["MARY", "HAD", "A", "LITTLE", "LAMB"]
         expected = list()
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertFalse(m)
         self.assertEqual(matching_components, expected)
 
@@ -225,7 +487,7 @@ class TestMatch(unittest.TestCase):
         words = ["MARY", "HAD", "A", "LITTLE", "LAMB", "CALLED", "WOOLY"]
         pattern = ["MARY", "HAD", "A", "LITTLE", "LAMB"]
         expected = list()
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertFalse(m)
         self.assertEqual(matching_components, expected)
 
@@ -233,7 +495,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["WHEN", "WILL", "2", "MEET"]
         expected = ["WHEN", "WILL", "WE THREE", "MEET"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -241,7 +503,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["WHEN", "1", "2", "MEET"]
         expected = ["WHEN", "WILL", "WE THREE", "MEET"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -249,7 +511,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["1", "1", "2", "1"]
         expected = ["WHEN", "WILL", "WE THREE", "MEET"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -257,7 +519,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["3", "2"]
         expected = ["WHEN WILL WE", "THREE MEET"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -265,7 +527,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["5"]
         expected = ["WHEN WILL WE THREE MEET"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -273,7 +535,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["0", "5"]
         expected = ["", "WHEN WILL WE THREE MEET"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -281,7 +543,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["5", "0"]
         expected = ["WHEN WILL WE THREE MEET", ""]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -289,7 +551,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["1", "0"]
         expected = ["WHEN", "WILL WE THREE MEET"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -297,7 +559,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["0", "1"]
         expected = ["WHEN WILL WE THREE", "MEET"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -305,7 +567,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["1", "1", "0"]
         expected = ["WHEN", "WILL", "WE THREE MEET"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -313,7 +575,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["0", "1", "0"]
         expected = ["", "WHEN", "WILL WE THREE MEET"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -321,7 +583,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["6"]
         expected = list()
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertFalse(m)
         self.assertEqual(matching_components, expected)
 
@@ -329,7 +591,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["0", "6"]
         expected = list()
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertFalse(m)
         self.assertEqual(matching_components, expected)
 
@@ -337,7 +599,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["6", "0"]
         expected = list()
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertFalse(m)
         self.assertEqual(matching_components, expected)
 
@@ -345,7 +607,7 @@ class TestMatch(unittest.TestCase):
         words = ["WHEN", "WILL", "WE", "THREE", "MEET"]
         pattern = ["1", "WHEN", "0"]
         expected = list()
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertFalse(m)
         self.assertEqual(matching_components, expected)
 
@@ -353,7 +615,7 @@ class TestMatch(unittest.TestCase):
         words = ["MY", "FAIR", "LADY"]
         pattern = ["MY", "(*FAIR GOOD)", "LADY"]
         expected = ["MY", "FAIR", "LADY"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -361,7 +623,7 @@ class TestMatch(unittest.TestCase):
         words = ["MY", "GOOD", "LADY"]
         pattern = ["MY", "(*FAIR GOOD)", "LADY"]
         expected = ["MY", "GOOD", "LADY"]
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertTrue(m)
         self.assertEqual(matching_components, expected)
 
@@ -369,7 +631,7 @@ class TestMatch(unittest.TestCase):
         words = ["MY", "LADY"]
         pattern = ["MY", "(*FAIR GOOD)", "LADY"]
         expected = list()
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertFalse(m)
         self.assertEqual(matching_components, expected)
 
@@ -377,7 +639,7 @@ class TestMatch(unittest.TestCase):
         words = ["MY", "FAIR", "GOOD", "LADY"]
         pattern = ["MY", "(*FAIR GOOD)", "LADY"]
         expected = list()
-        m, c = match({}, pattern, words, matching_components)
+        m, c = recursive_match({}, pattern, words, matching_components)
         self.assertFalse(m)
         self.assertEqual(matching_components, expected)
 
