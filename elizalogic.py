@@ -4,9 +4,11 @@ from typing import Tuple, Dict
 
 from elizaconstant import TRACE_PREFIX, TagMap, SPECIAL_RULE_NONE, RuleMap
 from elizaencoding import last_chunk_as_bcd, hash
-from elizautil import reassemble, elz_join, match
+from elizautil import reassemble, elz_join, slip_match
 
-
+def match_func(tags, pattern, words) -> Tuple[bool, List[str]]:
+    return slip_match(tags, pattern, words)
+    
 class RuleBase:
     def __init__(self, keyword: str, word_substitution: str, precedence: int):
         self.keyword = keyword
@@ -64,14 +66,13 @@ class RuleKeyword(RuleBase):
 
         constituents = []
         rule = None
+
         _words = words.copy()
-        for item in self.transformations:
-
-            status, matches = match(tags, item.decomposition[:], _words[:], constituents)
-
+        for idx, item in enumerate(self.transformations):
+            status, constituents = match_func(tags, item.decomposition, _words)
             if status:
                 rule = item
-                #constituents = matches
+                rule_index = idx
                 break
 
         if rule is None:
@@ -86,12 +87,9 @@ class RuleKeyword(RuleBase):
         reassembly_rule = rule.reassembly_rules[rule.next_reassembly_rule]
         self.trace_reassembly(reassembly_rule)
 
-        # update the reassembly rule index so that they all get cycled through
-        # rule->next_reassembly_rule++;
-        # dif (rule->next_reassembly_rule == rule->reassembly_rules.size())
-        # rule->next_reassembly_rule = 0
-
-        rule.next_reassembly_rule = (rule.next_reassembly_rule + 1) % len(rule.reassembly_rules)
+        rule.next_reassembly_rule = (rule.next_reassembly_rule + 1)
+        if rule.next_reassembly_rule == len(rule.reassembly_rules):
+            rule.next_reassembly_rule = 0
 
         if len(reassembly_rule) == 1 and reassembly_rule[0] == "NEWKEY":
             return "newkey", words, link_keyword
@@ -187,11 +185,12 @@ class RuleMemory(RuleBase):
         lc = last_chunk_as_bcd(words[-1])
         hsh = hash(lc, 2)
         transformation = self.transformations[hsh]
-        constituents: List[str] = []
-        if not match(tags, transformation.decomposition, words[::], constituents):
+        (found, mat) = match_func(tags, transformation.decomposition, words)
+        if not found:
             return
-
-        new_memory = elz_join(reassemble(transformation.reassembly_rules[0], constituents))
+        reassembly_rule = transformation.reassembly_rules[0]
+        assmbl = reassemble(reassembly_rule, mat)
+        new_memory = elz_join(assmbl)
         self.trace += f"{TRACE_PREFIX}new memory: {new_memory}\n"
         self.memories.append(new_memory)
 

@@ -220,19 +220,22 @@ class ElizaScriptReader:
     # // if prior is false nexttok() should be the first symbol following the
     # // opening bracket, e.g. (@WORD WORD 0 WORD)
     def rdlist(self, prior=True) -> List[str]:
+
         s: List[str] = []
         t: Token = self.tokenizer.nexttok()
         if prior:
             if not t.is_open():
                 raise RuntimeError(self.errormsg("expected '('"))
             t = self.tokenizer.nexttok()
+
         while not t.is_close():
             if t.is_symbol():
                 s.append(t.value)
             elif t.is_number():
                 s.append(t.value)
             elif t.is_open():
-                sublist = str()
+
+                sublist = ""
                 t = self.tokenizer.nexttok()
                 while not t.is_close():
                     if not t.is_symbol():
@@ -359,7 +362,7 @@ class ElizaScriptReader:
                     t = self.tokenizer.peektok()
                     if t.is_symbol("="):
                         # // a reference
-                        t = self.tokenizer.nexttok()
+                        self.tokenizer.nexttok()
                         t = self.tokenizer.nexttok()
                         if not t.is_symbol():
                             raise RuntimeError(self.errormsg("expected equivalence class name"))
