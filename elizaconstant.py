@@ -1,9 +1,10 @@
-from typing import Dict, Optional, List, Any, OrderedDict
+from typing import Optional, List, Any, OrderedDict
 
+# Type definitins.
 RuleMap = OrderedDict[str, Optional[Any]]
 TagMap = OrderedDict[str, List[str]]
-# Define the special NONE rule
-SPECIAL_RULE_NONE = "zNONE"
 
-# Define the trace prefix
+
+# Constants
+SPECIAL_RULE_NONE = "zNONE"
 TRACE_PREFIX = " | "

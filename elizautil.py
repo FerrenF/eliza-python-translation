@@ -1,31 +1,42 @@
 from collections import OrderedDict
-from typing import Dict, List, Tuple
+from typing import Tuple
 
 import ctypes
 from typing import List, Dict
 
 from elizaconstant import TagMap, RuleMap
-import re
+
 
 # CONTAINS ALL UTILITY FUNCTIONS
-def split_user_input(s, punctuation):
-    result = []
-    word = ''
-    for ch in s:
-        if ch == ' ' or ch in punctuation:
-            if word:
-                result.append(word)
-                word = ''
-            if ch != ' ':
-                result.append(ch)
+def split_input(input_string, punctuation_marks):
+    """
+    Splits a user input string into a list of words and punctuation marks.
+
+    :param input_string: The input string to be split.
+    :type input_string: str
+    :param punctuation_marks: A string containing characters to be treated as punctuation marks.
+    :type punctuation_marks: str
+    :return: A list containing the words and punctuation marks from the input string.
+    :rtype: list[str]
+    """
+
+    result_list = []
+    word_accumulator = ''
+    for character in input_string:
+        if character == ' ' or character in punctuation_marks:
+            if word_accumulator:
+                result_list.append(word_accumulator)
+                word_accumulator = ''
+            if character != ' ':
+                result_list.append(character)
         else:
-            word += ch
-    if word:
-        result.append(word)
-    return result
+            word_accumulator += character
+    if word_accumulator:
+        result_list.append(word_accumulator)
+    return result_list
 
 
-def elz_join(s):
+def eliza_specific_join(s):
     result = ""
     for word in s:
         if word:
@@ -34,17 +45,31 @@ def elz_join(s):
             result += word
     return result
 
-def elz_split(s: str) -> List[str]:
+def eliza_specific_split(s: str) -> List[str]:
+    """
+    Where it could have been complex, it only needed to be simple. I thought there might be a possibility that the split
+    functionality on 1966 CPU architecture might output differently. Nope. Just need to split it normally.
+    :param s:
+    :return:
+    """
     return s.split(' ')
 
-def to_int(s: str) -> int:
-    result = 0
-    for c in s:
-        if c.isdigit():
-            result = 10 * result + ord(c) - ord('0')
+def to_int(symbols: str) -> int:
+    """
+        Converts a string containing digits into an integer.
+
+        :param symbols: The string containing digits to be converted into an integer.
+        :type symbols: str
+        :return: The integer representation of the input string, or -1 if the input contains non-digit characters.
+        :rtype: int
+        """
+    integer_value = 0
+    for character in symbols:
+        if character.isdigit():
+            integer_value = 10 * integer_value + ord(character) - ord('0')
         else:
             return -1
-    return result
+    return integer_value
 
 def char2uint(c: str) -> ctypes.c_char_p:
     b_string1 = c.encode('utf-8')
@@ -53,40 +78,61 @@ def char2uint(c: str) -> ctypes.c_char_p:
 def unsigned(i: int) -> ctypes.c_uint:
     return ctypes.c_uint(i)
 
-def reassemble(reassembly_rule: List[str], components: List[str]) -> List[str]:
-    result: List[str] = []
-    for r in reassembly_rule:
-        n = to_int(r)
-        if n < 0:
-            result.append(r)
-        elif n == 0 or n > len(components):
-            result.append("THINGY")
+def reassemble_from_rule(reassembly_rule: List[str], components: List[str]) -> List[str]:
+    """
+      Reassembles a list of components according to a reassembly rule.
+
+      :param reassembly_rule: The list of reassembly rules containing wildcard symbols or component indices.
+      :type reassembly_rule: List[str]
+      :param components: The list of components to be reassembled.
+      :type components: List[str]
+      :return: The reassembled list of components.
+      :rtype: List[str]
+      """
+    reassembled_components: List[str] = []
+    for rule in reassembly_rule:
+        index = to_int(rule)
+        if index < 0:
+            reassembled_components.append(rule)
+        elif index == 0 or index > len(components):
+            reassembled_components.append("THINGY")
         else:
-            j = elz_split(components[n - 1])
-            result.extend(j)
-    return result
+            split_components = eliza_specific_split(components[index - 1])
+            reassembled_components.extend(split_components)
+    return reassembled_components
 
-def inlist(word: str, wordlist: str, tags: Dict[str, List[str]]) -> bool:
+
+def words_in_list(word: str, wordlist: str, tags: Dict[str, List[str]]) -> bool:
+    """
+       Checks if a word is present in a word list or within tags in a dictionary.
+
+       :param word: The word to search for.
+       :type word: str
+       :param wordlist: The string representing a word list or tags in a dictionary.
+       :type wordlist: str
+       :param tags: The dictionary containing tags and associated word lists.
+       :type tags: Dict[str, List[str]]
+       :return: True if the word is found, False otherwise.
+       :rtype: bool
+       """
     assert word, "Word should not be empty"
-    cp = wordlist.strip(" ()")
+    cleaned_wordlist = wordlist.strip(" ()")
 
-    if cp.startswith('*'):
-        cp = cp[1:]
-        s = cp.split()
-        for w in s:
-            if word in w:
+    if cleaned_wordlist.startswith('*'):
+        cleaned_wordlist = cleaned_wordlist[1:]
+        words = cleaned_wordlist.split()
+        for word_group in words:
+            if word in word_group:
                 return True
         return False
-    elif cp.startswith('/'):
-        cp = cp[1:].strip()
-        s = cp.split()
-        for w in s:
-            if w in tags:
-                tagList = tags.get(w) or []
-                if word in tagList:
+    elif cleaned_wordlist.startswith('/'):
+        cleaned_wordlist = cleaned_wordlist[1:].strip()
+        tags_list = cleaned_wordlist.split()
+        for tag in tags_list:
+            if tag in tags:
+                tag_list = tags.get(tag) or []
+                if word in tag_list:
                     return True
-
-
         return False
     return False
 
@@ -145,11 +191,11 @@ def xmatch(tags: tagmap,
                 for i in range(n):
                     part.append(word_array[w])
                     w += 1
-                result[p] = elz_join(part)
+                result[p] = eliza_specific_join(part)
             else:  # pat_array[p] is a literal or list
                 assert w < len(word_array)
                 if pat_array[p][0] == '(':  # it's a list, e.g., "(*SAD HAPPY)"
-                    if inlist(word_array[w], pat_array[p], tags):
+                    if words_in_list(word_array[w], pat_array[p], tags):
                         result[p] = word_array[w]
                         w += 1
                     else:
@@ -167,7 +213,7 @@ def xmatch(tags: tagmap,
                 part = []
                 for i in range(wildcard_len):
                     part.append(word_array[word_ind_begin + i])
-                result[p_begin] = elz_join(part)
+                result[p_begin] = eliza_specific_join(part)
             return True, w_end_result
         if wildcard_len == wildcard_end:
             break
@@ -266,7 +312,7 @@ def recursive_match(tags: Dict[str, List[str]], pattern: List[str], words: List[
         current_word = words.pop(0)
         if patword[0] == '(':
             # patword is a group, is current_word in that group?
-            if not inlist(current_word, patword, tags):
+            if not words_in_list(current_word, patword, tags):
                 return False, []
 
         elif patword != current_word:
@@ -313,30 +359,43 @@ def recursive_match(tags: Dict[str, List[str]], pattern: List[str], words: List[
     return False, []
 
 def collect_tags(rules: RuleMap) -> TagMap:
+    """
+        Collects tags from a dictionary of rules and returns a dictionary mapping tags to their associated keywords.
+
+        :param rules: The dictionary of rules where tags are extracted from.
+        :type rules: RuleMap
+        :return: A dictionary mapping tags to their associated keywords.
+        :rtype: TagMap
+        """
     tags: TagMap = OrderedDict()
     for tag, rule in rules.items():
         keyword_tags = rule.dlist_tags()
-        for index, item in enumerate(keyword_tags):
-            if item == "/":
+        for index, tag_item in enumerate(keyword_tags):
+            if tag_item == "/":
                 continue
-            if len(item) > 1 and item[0] == '/':
-                keyword_tags[index] = item[1:]
+            if len(tag_item) > 1 and tag_item[0] == '/':
+                tag_item = tag_item[1:]
 
-            ky = rule.keyword
-            tg = keyword_tags[index]
-            v = []
-            if tg in tags.keys() and len(tags[tg]):
-                v = tags[tg]
-            v.append(ky)
-            tags[tg] = v
+            keyword = rule.keyword
+            tag_name = tag_item
+            keywords_for_tag = []
+            if tag_name in tags.keys() and len(tags[tag_name]):
+                keywords_for_tag = tags[tag_name]
+            keywords_for_tag.append(keyword)
+            tags[tag_name] = keywords_for_tag
     return tags
 
+
 class RuleBase:
+    """
+        Stub.
+    """
     def dlist_tags(self) -> List[str]:
         pass
 
     def to_string(self) -> str:
         pass
+
 
 def get_rule(rules: RuleMap, keyword: str, **kwargs) -> RuleBase:
     rule = rules.get(keyword, None)

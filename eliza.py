@@ -1,9 +1,9 @@
 from typing import List
 
 from elizaconstant import SPECIAL_RULE_NONE
-from elizalogic import elz_join, NullTracer
+from elizalogic import eliza_specific_join, NullTracer
 from elizaencoding import filter_bcd
-from elizautil import collect_tags, get_rule, split_user_input
+from elizautil import collect_tags, get_rule, split_input
 
 
 class Eliza:
@@ -64,7 +64,7 @@ class Eliza:
         # for simplicity, convert the given input string to a list of uppercase words
         # e.g. "Hello, world!" -> ("HELLO" "," "WORLD" ".")
 
-        words = split_user_input(input_str, self.punctuation)
+        words = split_input(input_str, self.punctuation)
         self.trace.begin_response(words)
 
         # J W's "a certain counting mechanism" is updated for each response
@@ -185,11 +185,11 @@ class Eliza:
         none_rule = self.rules.get(SPECIAL_RULE_NONE)
         discard = ""
         none_status, none_rule, none_keyword = none_rule.apply_transformation(words, self.tags, discard)
-        self.trace.using_none(elz_join(none_rule))
+        self.trace.using_none(eliza_specific_join(none_rule))
         return none_rule
 
     def response(self, input_str: str) -> str:
-        return elz_join(self.response_list(input_str))
+        return eliza_specific_join(self.response_list(input_str))
 
     def _is_delimiter(self, word: str) -> bool:
         return word in self.delimiters
@@ -201,7 +201,7 @@ class Eliza:
             self.trace.discard_subclause(' '.join(words[:idx]))
 
     def get_greeting(self) -> str:
-        return elz_join(self.greetings) or "Hello."
+        return eliza_specific_join(self.greetings) or "Hello."
 
     def _get_nomatch_msg(self) -> str:
         ind = self.limit - 1 % len(self.nomatch_msgs_)
