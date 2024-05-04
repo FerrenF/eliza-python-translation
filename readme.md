@@ -42,12 +42,12 @@ Built-ins are the only thing you need. Tested on python 3.7.
      - The type definititions and constants used with ELIZA
        - TagMap
        - RuleMap
-       - 
      
 ## Resources:
-    - [DOCTOR_1966_01_CACM.py](DOCTOR_1966_01_CACM.py) - The original doctor script.
-    - [cacm_1966_conversation.py](cacm_1966_conversation.py) - For testing purposes.
-    - [cacm_1966_01_DOCTOR_TEST.py](cacm_1966_01_DOCTOR_TEST.py) - Comment stripped original script for testing purposes.
+    + [DOCTOR_1966_01_CACM.py](DOCTOR_1966_01_CACM.py) - The original doctor script.
+    + eliza_test_conversations.py
+        - [cacm_1966_conversation.py](cacm_1966_conversation.py) - For testing purposes.
+        - [cacm_1966_01_DOCTOR_TEST.py](cacm_1966_01_DOCTOR_TEST.py) - Comment stripped original script for testing purposes.
 
 ## Preview
 ![img.png](img.png)
