@@ -1,12 +1,19 @@
 from abc import abstractmethod, ABC
-from typing import List
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 
 from elizaconstant import TRACE_PREFIX, TagMap, SPECIAL_RULE_NONE, RuleMap
 from elizaencoding import last_chunk_as_bcd, hash
-from elizautil import reassemble, elz_join, slip_match
+from elizautil import reassemble_from_rule, eliza_specific_join, slip_match
+
 
 def match_func(tags, pattern, words) -> Tuple[bool, List[str]]:
+    """
+    This method facilitates easy swapping out of different match methods. Anthony tried a few over the course of his research and as such, did I.
+    :param tags:
+    :param pattern:
+    :param words:
+    :return:
+    """
     return slip_match(tags, pattern, words)
     
 class RuleBase:
@@ -104,10 +111,10 @@ class RuleKeyword(RuleBase):
             link_keyword = reassembly_rule[-3]
             reassembly = reassembly_rule[3:reassembly_rule.index(')')]
 
-            _words = reassemble(reassembly, constituents)
+            _words = reassemble_from_rule(reassembly, constituents)
             return "linkkey", _words, link_keyword
 
-        _words = reassemble(reassembly_rule, constituents)
+        _words = reassemble_from_rule(reassembly_rule, constituents)
         return "complete", _words, link_keyword
 
     def to_string(self) -> str:
@@ -189,8 +196,8 @@ class RuleMemory(RuleBase):
         if not found:
             return
         reassembly_rule = transformation.reassembly_rules[0]
-        assmbl = reassemble(reassembly_rule, mat)
-        new_memory = elz_join(assmbl)
+        assmbl = reassemble_from_rule(reassembly_rule, mat)
+        new_memory = eliza_specific_join(assmbl)
         self.trace += f"{TRACE_PREFIX}new memory: {new_memory}\n"
         self.memories.append(new_memory)
 
@@ -235,8 +242,6 @@ class Transform:
         return f"Transform: Decomposition={self.decomposition}, Reassembly Rules={self.reassembly_rules},\
          Next Reassembly Rule={self.next_reassembly_rule}"
 
-
-# Base class for tracer
 
 
 class Tracer(ABC):
@@ -344,7 +349,7 @@ class NullTracer(Tracer):
 # Pre tracer class
 class PreTracer(NullTracer):
     def pre_transform(self, keyword: str, words: List[str]) -> None:
-        print(elz_join(words), "   :", keyword)
+        print(eliza_specific_join(words), "   :", keyword)
 
 
 # String tracer class
@@ -358,7 +363,7 @@ class StringTracer(NullTracer):
         self.trace_ = ""
         self.script_ = ""
         self.word_substitutions_ = ""
-        self.trace_ += "input: " + elz_join(words) + '\n'
+        self.trace_ += "input: " + eliza_specific_join(words) + '\n'
 
     def limit(self, limit: int, built_in_msg: str) -> None:
         self.trace_ += "LIMIT: " + str(limit) + " (" + built_in_msg + ")\n"
@@ -437,3 +442,16 @@ class StringTracer(NullTracer):
     def clear(self) -> None:
         self.trace_ = ""
         self.script_ = ""
+
+
+class Script:
+    """
+        The script class is a structure for containing the rules and memory of an eliza instance.
+    """
+    def __init__(self):
+        # ELIZA's opening remarks e.g. "HOW DO YOU DO.  PLEASE TELL ME YOUR PROBLEM"
+        self.hello_message: List[str] = []
+        # maps keywords -> transformation rules
+        self.rules: Dict[str, RuleKeyword] = {}
+        # the one and only special case MEMORY rule.
+        self.mem_rule: RuleMemory = RuleMemory()

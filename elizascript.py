@@ -3,10 +3,10 @@ from typing import Dict
 from typing import List, Any, Tuple
 
 from elizaconstant import SPECIAL_RULE_NONE
-from elizalogic import RuleKeyword, RuleMemory
-from elizautil import elz_join
+from elizalogic import RuleKeyword, RuleMemory, Script
+from elizautil import eliza_specific_join
 
-
+#INTERNAL UTILITY
 def _is_whitespace(ch):
     return ch <= 0x20 or ch == 0x7F or chr(ch).isspace()
 
@@ -22,6 +22,7 @@ def _is_digit(ch):
 def _check_if_not_symbol(ch):
     return ch in (ord('('), ord(')'), ord(';')) or _is_whitespace(ch)
 
+# END INTERNAL UTILITY
 class StringIOWithPeek(io.StringIO):
     def peek(self, size=1):
         current_position = self.tell()
@@ -32,19 +33,9 @@ class StringIOWithPeek(io.StringIO):
 
 ## SCRIPT: This class holds a parsed eliza profile, including a map of rules and a conversation memory.
 
-class Script:
-
-    def __init__(self):
-        # ELIZA's opening remarks e.g. "HOW DO YOU DO.  PLEASE TELL ME YOUR PROBLEM"
-        self.hello_message: List[str] = []
-        # maps keywords -> transformation rules
-        self.rules: Dict[str, RuleKeyword] = {}
-        # the one and only special case MEMORY rule.
-        self.mem_rule: RuleMemory = RuleMemory()
-
 def script_to_string(s: Script):
     result = str()
-    result += "(" + elz_join(s.hello_message) + ")\n"
+    result += "(" + eliza_specific_join(s.hello_message) + ")\n"
     for (k, v) in s.rules.items():
         result += v.to_string()
     result += s.mem_rule.to_string()
