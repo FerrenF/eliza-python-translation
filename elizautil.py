@@ -121,9 +121,8 @@ def words_in_list(word: str, wordlist: str, tags: Dict[str, List[str]]) -> bool:
     if cleaned_wordlist.startswith('*'):
         cleaned_wordlist = cleaned_wordlist[1:]
         words = cleaned_wordlist.split()
-        for word_group in words:
-            if word in word_group:
-                return True
+        if word in words:
+            return True
         return False
     elif cleaned_wordlist.startswith('/'):
         cleaned_wordlist = cleaned_wordlist[1:].strip()
@@ -230,7 +229,7 @@ def slip_match(
         words: stringlist
 ) -> Tuple[bool, stringlist]:
     """
-    A closer simulation to the MAD-SLIP YMATCH code. From Anthony:
+    A closer simulation to the MAD-SLIP xmatch code. From Anthony:
      These things must be true
       - the pattern segment may contain at most one 0-wildcard
       - if the segment contains a 0-wildcard it must be the first element
@@ -292,6 +291,8 @@ def slip_match(
         return False, []  # Pattern did not consume all words
 
     return True, matches
+
+
 
 def recursive_match(tags: Dict[str, List[str]], pattern: List[str], words: List[str], matching_components: List[str]) -> (bool, List[str]):
     """
