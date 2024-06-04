@@ -1,4 +1,10 @@
-A python translation of Anthay's C++ code. Find that here, and thank them because they did a lot more research than I did: https://github.com/anthay/ELIZA
+## Eliza_Python_Translation: A python translation of C++ code by Anthony H.. 
+
+Find that here, and thank them because they did a lot more research than I did: https://github.com/anthay/ELIZA
+
+Want to talk to ELIZA and not compile your own code? Do that here: https://elizaspeaks.motopc.net/
+
+Want to run that webapp? Find that here: https://github.com/FerrenF/elizaSpeak
 
 ## Requirements:
 Built-ins are the only thing you need. Tested on python 3.7.
